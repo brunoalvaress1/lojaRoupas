@@ -1,16 +1,16 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-const ASPECT = 1280 / 927;
+const ASPECT = 1536 / 1024;
 
 export function Logo({ className, height = 40 }: { className?: string; height?: number }) {
   return (
     <Image
-      src="/logo-fluflu-modas.jpeg"
-      alt="Lá Flu Flu Modas"
+      src="/logo-fluflu-modas.png"
+      alt="Flu Flu Modas"
       width={Math.round(height * ASPECT)}
       height={height}
-      className={cn("rounded object-cover", className)}
+      className={cn("object-contain", className)}
       style={{ height, width: "auto" }}
       priority
     />

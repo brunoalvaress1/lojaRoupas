@@ -8,6 +8,7 @@ import { CartCount } from "./CartCount";
 import { AccountIcon } from "./AccountIcon";
 import { useAppData } from "@/context/AppDataContext";
 import { buildSimpleWhatsAppUrl } from "@/lib/whatsapp";
+import { Logo } from "@/components/shared/Logo";
 
 export function Header() {
   const { settings } = useAppData();
@@ -15,11 +16,11 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 hidden w-full border-b border-border bg-background/90 backdrop-blur md:block">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-8">
-        <Link
-          href="/"
-          className="font-display text-2xl tracking-widest-xs"
-        >
-          {settings.name}
+        <Link href="/" className="flex items-center gap-3">
+          <Logo height={44} />
+          <span className="font-display text-xl tracking-widest-xs">
+            {settings.name}
+          </span>
         </Link>
 
         <nav className="flex items-center gap-9">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -8,7 +8,23 @@ import { motion, AnimatePresence } from "motion/react";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useAppData } from "@/context/AppDataContext";
+import { Logo } from "@/components/shared/Logo";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+
+/** If the account that just signed in is an admin, send it to the admin
+ * panel instead of the regular customer destination — people who land on
+ * the storefront login instead of /admin/login shouldn't get stuck. */
+async function redirectTargetFor(supabase: ReturnType<typeof createClient>, fallback: string) {
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) return fallback;
+  const { data: admin } = await supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", data.user.id)
+    .maybeSingle();
+  return admin ? "/admin" : fallback;
+}
 
 type Tab = "login" | "cadastro";
 
@@ -20,6 +36,7 @@ export function LoginView() {
   const redirectTo = searchParams.get("redirect") || "/favoritos";
 
   const { signIn, signUp } = useAuth();
+  const supabase = useMemo(() => createClient(), []);
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,12 +55,14 @@ export function LoginView() {
     setError(null);
     setSubmitting(true);
     const result = await signIn(loginEmail, loginPassword);
-    setSubmitting(false);
     if (!result.ok) {
+      setSubmitting(false);
       setError(result.error ?? "Não foi possível entrar.");
       return;
     }
-    router.push(redirectTo);
+    const target = await redirectTargetFor(supabase, redirectTo);
+    setSubmitting(false);
+    router.push(target);
     router.refresh();
   }
 
@@ -73,8 +92,8 @@ export function LoginView() {
     <div className="grid min-h-[calc(100svh-64px)] grid-cols-1 md:min-h-[calc(100svh-80px)] md:grid-cols-2">
       <div className="relative hidden md:block">
         <Image
-          src="https://images.unsplash.com/photo-1618244972963-dbee1a7edc95?w=1200&q=80&auto=format&fit=crop"
-          alt={`Look da coleção ${storeSettings.name}`}
+          src="/dentroloja2.jpeg"
+          alt={`Interior da loja ${storeSettings.name}`}
           fill
           sizes="50vw"
           className="object-cover"
@@ -91,8 +110,8 @@ export function LoginView() {
 
       <div className="flex items-center justify-center px-6 py-16 sm:px-12">
         <div className="w-full max-w-sm">
-          <Link href="/" className="font-display text-2xl tracking-widest-xs">
-            {storeSettings.name}
+          <Link href="/">
+            <Logo height={44} />
           </Link>
 
           <div className="mt-10 mb-8 flex border-b border-border">

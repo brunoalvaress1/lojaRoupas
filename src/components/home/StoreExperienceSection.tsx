@@ -14,7 +14,7 @@ export function StoreExperienceSection() {
       <Reveal direction="left" className="relative aspect-[4/5] w-full overflow-hidden">
         <Parallax strength={40} className="absolute inset-0 -top-[10%] h-[120%] w-full">
           <Image
-            src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1200&q=80&auto=format&fit=crop"
+            src="/dentroloja1.jpeg"
             alt={`Interior da loja ${settings.name}`}
             fill
             sizes="(max-width: 768px) 100vw, 50vw"

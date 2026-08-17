@@ -5,6 +5,7 @@ import { MessageCircle } from "lucide-react";
 import { InstagramIcon } from "@/components/icons/InstagramIcon";
 import { useAppData } from "@/context/AppDataContext";
 import { buildSimpleWhatsAppUrl } from "@/lib/whatsapp";
+import { Logo } from "@/components/shared/Logo";
 
 export function Footer() {
   const { settings: storeSettings } = useAppData();
@@ -13,9 +14,7 @@ export function Footer() {
     <footer className="border-t border-border bg-background pb-20 md:pb-0">
       <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 sm:px-8 md:grid-cols-4">
         <div>
-          <p className="font-display text-xl tracking-widest-xs">
-            {storeSettings.name}
-          </p>
+          <Logo height={48} />
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">
             {storeSettings.tagline}
           </p>
@@ -74,8 +73,11 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-border px-6 py-5 text-center text-xs text-muted-foreground sm:px-8">
-        © {new Date().getFullYear()} {storeSettings.name}. Todos os direitos reservados.
+      <div className="flex flex-col items-center gap-1 border-t border-border px-6 py-5 text-center text-xs text-muted-foreground sm:px-8">
+        <p>© {new Date().getFullYear()} {storeSettings.name}. Todos os direitos reservados.</p>
+        <Link href="/admin/login" className="underline underline-offset-4 opacity-60 hover:opacity-100">
+          Painel administrativo
+        </Link>
       </div>
     </footer>
   );

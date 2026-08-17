@@ -59,7 +59,7 @@ function mapProduct(row: ProductRow): Product {
     promoPrice: row.promo_price != null ? Number(row.promo_price) : undefined,
     description: row.description ?? "",
     composition: row.composition ?? undefined,
-    images: images.length > 0 ? images : [{ url: "", alt: row.name }],
+    images,
     colors,
     sizes,
     variants,
@@ -95,6 +95,19 @@ export const getProductBySlug = cache(
     return mapProduct(data as unknown as ProductRow);
   }
 );
+
+export const getProductById = cache(async (id: string): Promise<Product | null> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(PRODUCT_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+  return mapProduct(data as unknown as ProductRow);
+});
 
 /**
  * For generateStaticParams / sitemap.ts — these run at build time with no

@@ -9,6 +9,7 @@ function mapCategory(c: {
   name: string;
   image: string | null;
   order: number;
+  active: boolean;
 }): Category {
   return {
     id: c.id,
@@ -16,6 +17,7 @@ function mapCategory(c: {
     name: c.name,
     image: c.image ?? "",
     order: c.order,
+    active: c.active,
   };
 }
 

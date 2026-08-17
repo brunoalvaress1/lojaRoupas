@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { Logo } from "@/components/shared/Logo";
 import type { StoreSettings } from "@/types";
 
 export function AdminLoginView({ settings }: { settings: StoreSettings }) {
@@ -52,12 +52,7 @@ export function AdminLoginView({ settings }: { settings: StoreSettings }) {
     <div className="flex min-h-svh items-center justify-center bg-[#0d0c0a] px-6 text-white">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10">
-            <Lock className="h-5 w-5" strokeWidth={1.5} />
-          </div>
-          <p className="mt-4 font-display text-2xl tracking-widest-xs">
-            {settings.name}
-          </p>
+          <Logo height={72} />
           <p className="mt-1 text-xs uppercase tracking-widest-xs text-white/50">
             Painel administrativo
           </p>

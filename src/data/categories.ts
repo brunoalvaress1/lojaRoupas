@@ -8,6 +8,7 @@ export const categories: Category[] = [
     image:
       "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80&auto=format&fit=crop",
     order: 1,
+    active: true,
   },
   {
     id: "cat-blusas",
@@ -16,6 +17,7 @@ export const categories: Category[] = [
     image:
       "https://images.unsplash.com/photo-1554568218-0f1715e72254?w=800&q=80&auto=format&fit=crop",
     order: 2,
+    active: true,
   },
   {
     id: "cat-camisas",
@@ -24,6 +26,7 @@ export const categories: Category[] = [
     image:
       "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800&q=80&auto=format&fit=crop",
     order: 3,
+    active: true,
   },
   {
     id: "cat-calcas",
@@ -32,6 +35,7 @@ export const categories: Category[] = [
     image:
       "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800&q=80&auto=format&fit=crop",
     order: 4,
+    active: true,
   },
   {
     id: "cat-saias",
@@ -40,6 +44,7 @@ export const categories: Category[] = [
     image:
       "https://images.unsplash.com/photo-1551163943-3f6a855d1153?w=800&q=80&auto=format&fit=crop",
     order: 5,
+    active: true,
   },
   {
     id: "cat-shorts",
@@ -48,6 +53,7 @@ export const categories: Category[] = [
     image:
       "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=800&q=80&auto=format&fit=crop",
     order: 6,
+    active: true,
   },
   {
     id: "cat-conjuntos",
@@ -56,6 +62,7 @@ export const categories: Category[] = [
     image:
       "https://images.unsplash.com/photo-1618244972963-dbee1a7edc95?w=800&q=80&auto=format&fit=crop",
     order: 7,
+    active: true,
   },
   {
     id: "cat-acessorios",
@@ -64,5 +71,6 @@ export const categories: Category[] = [
     image:
       "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80&auto=format&fit=crop",
     order: 8,
+    active: true,
   },
 ];

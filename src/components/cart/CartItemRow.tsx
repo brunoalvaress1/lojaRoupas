@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, ImageOff } from "lucide-react";
 import type { CartItem } from "@/types";
 import { formatPrice } from "@/lib/format";
 import { useCartStore } from "@/store/cart-store";
@@ -15,9 +15,13 @@ export function CartItemRow({ item }: { item: CartItem }) {
     <div className="flex gap-4 border-b border-border py-5">
       <Link
         href={`/produto/${item.slug}`}
-        className="relative h-24 w-20 shrink-0 overflow-hidden bg-muted sm:h-28 sm:w-24"
+        className="relative flex h-24 w-20 shrink-0 items-center justify-center overflow-hidden bg-muted sm:h-28 sm:w-24"
       >
-        <Image src={item.image} alt={item.name} fill sizes="96px" className="object-cover" />
+        {item.image ? (
+          <Image src={item.image} alt={item.name} fill sizes="96px" className="object-cover" />
+        ) : (
+          <ImageOff className="h-5 w-5 text-muted-foreground/40" strokeWidth={1.2} />
+        )}
       </Link>
 
       <div className="flex flex-1 flex-col justify-between">

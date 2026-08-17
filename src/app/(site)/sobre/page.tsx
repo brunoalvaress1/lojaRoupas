@@ -38,7 +38,7 @@ export default async function SobrePage() {
     <div>
       <section className="relative flex h-[50vh] min-h-[380px] items-end overflow-hidden bg-black text-white">
         <Image
-          src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1600&q=80&auto=format&fit=crop"
+          src="/foraDaLoja.jpeg"
           alt={`Fachada da loja ${storeSettings.name}`}
           fill
           priority
@@ -79,10 +79,10 @@ export default async function SobrePage() {
 
       <section className="mx-auto grid max-w-6xl grid-cols-2 gap-2 px-6 pb-16 sm:px-8 sm:pb-24 md:grid-cols-4">
         {[
-          "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=600&q=80&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&q=80&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=600&q=80&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=600&q=80&auto=format&fit=crop",
+          "/dentroloja1.jpeg",
+          "/dentroloja2.jpeg",
+          "/dentroloja3.jpeg",
+          "/foraDaLoja.jpeg",
         ].map((src, i) => (
           <div key={i} className="relative aspect-square overflow-hidden bg-muted">
             <Image

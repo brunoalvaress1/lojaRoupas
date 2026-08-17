@@ -47,6 +47,7 @@ export interface Category {
   name: string;
   image: string;
   order: number;
+  active: boolean;
 }
 
 export interface CartItem {

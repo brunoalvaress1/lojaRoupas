@@ -47,7 +47,7 @@ export function ProductDetail({
       slug: product.slug,
       name: product.name,
       reference: product.reference,
-      image: product.images[0].url,
+      image: product.images[0]?.url ?? "",
       colorId,
       colorName: color?.name ?? "",
       sizeId,

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { ImageOff } from "lucide-react";
 import type { Product } from "@/types";
 import { Price } from "@/components/shared/Price";
 import { Badge } from "@/components/shared/Badge";
@@ -19,29 +20,36 @@ export function ProductCard({
 }) {
   const { categories } = useAppData();
   const inStock = getProductStock(product);
-  const secondImage = product.images[1] ?? product.images[0];
+  const firstImage = product.images[0];
+  const secondImage = product.images[1] ?? firstImage;
   const category = categories.find((c) => c.slug === product.categorySlug);
 
   return (
     <Link href={`/produto/${product.slug}`} className="group block">
       <div className="relative aspect-[3/4] overflow-hidden bg-muted">
-        <div className="absolute inset-0 overflow-hidden">
-          <Image
-            src={product.images[0].url}
-            alt={product.images[0].alt}
-            fill
-            priority={priority}
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover transition-[opacity,transform] duration-700 ease-out group-hover:scale-[1.04] group-hover:opacity-0"
-          />
-          <Image
-            src={secondImage.url}
-            alt={secondImage.alt}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="absolute inset-0 hidden object-cover opacity-0 transition-[opacity,transform] duration-700 ease-out group-hover:scale-[1.04] group-hover:opacity-100 md:block"
-          />
-        </div>
+        {firstImage ? (
+          <div className="absolute inset-0 overflow-hidden">
+            <Image
+              src={firstImage.url}
+              alt={firstImage.alt}
+              fill
+              priority={priority}
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover transition-[opacity,transform] duration-700 ease-out group-hover:scale-[1.04] group-hover:opacity-0"
+            />
+            <Image
+              src={secondImage.url}
+              alt={secondImage.alt}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="absolute inset-0 hidden object-cover opacity-0 transition-[opacity,transform] duration-700 ease-out group-hover:scale-[1.04] group-hover:opacity-100 md:block"
+            />
+          </div>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <ImageOff className="h-6 w-6 text-muted-foreground/40" strokeWidth={1.2} />
+          </div>
+        )}
 
         <div className="absolute left-3 top-3 flex flex-col gap-2">
           {product.isNew && <Badge variant="dark">Novo</Badge>}

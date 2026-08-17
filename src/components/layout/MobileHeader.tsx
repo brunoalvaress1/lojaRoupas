@@ -9,6 +9,7 @@ import { CartCount } from "./CartCount";
 import { buildSimpleWhatsAppUrl } from "@/lib/whatsapp";
 import { useAppData } from "@/context/AppDataContext";
 import { useAuth } from "@/context/AuthContext";
+import { Logo } from "@/components/shared/Logo";
 
 export function MobileHeader() {
   const [open, setOpen] = useState(false);
@@ -26,8 +27,8 @@ export function MobileHeader() {
           <Menu className="h-6 w-6" strokeWidth={1.5} />
         </button>
 
-        <Link href="/" className="font-display text-lg tracking-widest-xs">
-          {storeSettings.name}
+        <Link href="/">
+          <Logo height={32} />
         </Link>
 
         <Link href="/carrinho" aria-label="Carrinho" className="relative">
@@ -45,9 +46,8 @@ export function MobileHeader() {
           />
           <div className="animate-fade-in absolute inset-y-0 left-0 flex w-[82%] max-w-sm flex-col overflow-y-auto bg-background px-6 py-6">
             <div className="mb-8 flex items-center justify-between">
-              <span className="font-display text-xl tracking-widest-xs">
-                {storeSettings.name}
-              </span>
+              <Logo height={36} />
+              <span className="sr-only">{storeSettings.name}</span>
               <button aria-label="Fechar" onClick={() => setOpen(false)}>
                 <X className="h-6 w-6" strokeWidth={1.5} />
               </button>

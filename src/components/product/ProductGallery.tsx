@@ -2,12 +2,21 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { ImageOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ProductImage } from "@/types";
 
 export function ProductGallery({ images }: { images: ProductImage[] }) {
   const [active, setActive] = useState(0);
   const current = images[active] ?? images[0];
+
+  if (!current) {
+    return (
+      <div className="flex aspect-[3/4] w-full items-center justify-center bg-muted">
+        <ImageOff className="h-8 w-8 text-muted-foreground/40" strokeWidth={1.2} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col-reverse gap-3 sm:flex-row">

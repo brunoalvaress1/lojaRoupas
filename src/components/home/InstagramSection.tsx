@@ -9,7 +9,10 @@ import type { Product } from "@/types";
 
 export function InstagramSection({ products }: { products: Product[] }) {
   const { settings } = useAppData();
-  const images = products.slice(0, 6).map((p) => p.images[0]);
+  const images = products
+    .map((p) => p.images[0])
+    .filter((img): img is NonNullable<typeof img> => Boolean(img))
+    .slice(0, 6);
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-16 sm:px-8 sm:py-24">
