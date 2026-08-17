@@ -3,12 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { categories } from "@/data/categories";
+import { useAppData } from "@/context/AppDataContext";
 import { SectionHeading } from "@/components/shared/SectionHeading";
+import type { Category } from "@/types";
 
 const FEATURED_SLUGS = ["vestidos", "conjuntos"];
 
 export function CategoriesSection() {
+  const { categories } = useAppData();
   const featured = categories.filter((c) => FEATURED_SLUGS.includes(c.slug));
   const rest = categories.filter((c) => !FEATURED_SLUGS.includes(c.slug));
 
@@ -57,7 +59,7 @@ function CategoryTile({
   className,
   delay,
 }: {
-  category: (typeof categories)[number];
+  category: Category;
   index: number;
   className: string;
   delay: number;

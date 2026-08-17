@@ -2,22 +2,21 @@
 
 import Link from "next/link";
 import { Heart, LogOut } from "lucide-react";
-import { useFavoritesStore } from "@/store/favorites-store";
-import { useAuthStore } from "@/store/auth-store";
-import { useHasHydrated } from "@/hooks/use-has-hydrated";
-import { products } from "@/data/products";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { useFavorites } from "@/context/FavoritesContext";
 import { ProductCard } from "./ProductCard";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
+import type { Product } from "@/types";
 
-export function FavoritesView() {
-  const productIds = useFavoritesStore((s) => s.productIds);
-  const currentUser = useAuthStore((s) => s.currentUser);
-  const logout = useAuthStore((s) => s.logout);
-  const hasHydrated = useHasHydrated();
+export function FavoritesView({ products }: { products: Product[] }) {
+  const { user, loading, signOut } = useAuth();
+  const { favoriteIds } = useFavorites();
+  const router = useRouter();
 
-  if (!hasHydrated) return null;
+  if (loading) return null;
 
-  if (!currentUser) {
+  if (!user) {
     return (
       <div className="mx-auto flex max-w-lg flex-col items-center px-6 py-24 text-center">
         <Heart className="h-10 w-10 text-muted-foreground" strokeWidth={1.2} />
@@ -35,7 +34,7 @@ export function FavoritesView() {
     );
   }
 
-  const favoriteProducts = products.filter((p) => productIds.includes(p.id));
+  const favoriteProducts = products.filter((p) => favoriteIds.has(p.id));
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-8 sm:pt-10">
@@ -43,11 +42,14 @@ export function FavoritesView() {
         <div>
           <h1 className="font-display text-3xl sm:text-4xl">Meus favoritos</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Olá, {currentUser.name.split(" ")[0]}
+            Olá, {user.name.split(" ")[0]}
           </p>
         </div>
         <button
-          onClick={logout}
+          onClick={async () => {
+            await signOut();
+            router.refresh();
+          }}
           className="flex items-center gap-1.5 text-xs text-muted-foreground underline underline-offset-4"
         >
           <LogOut className="h-3.5 w-3.5" strokeWidth={1.5} />

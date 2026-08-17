@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { SizeGuideTable } from "./SizeGuideTable";
+import type { SizeGuideRow } from "@/types";
 
-export function SizeGuideModal() {
+export function SizeGuideModal({ rows }: { rows: SizeGuideRow[] }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -31,7 +32,7 @@ export function SizeGuideModal() {
                 <X className="h-5 w-5" strokeWidth={1.5} />
               </button>
             </div>
-            <SizeGuideTable />
+            <SizeGuideTable rows={rows} />
           </div>
         </div>
       )}

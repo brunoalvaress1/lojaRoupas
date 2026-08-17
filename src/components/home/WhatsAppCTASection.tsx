@@ -3,8 +3,11 @@
 import { MessageCircle } from "lucide-react";
 import { motion } from "motion/react";
 import { buildSimpleWhatsAppUrl } from "@/lib/whatsapp";
+import { useAppData } from "@/context/AppDataContext";
 
 export function WhatsAppCTASection() {
+  const { settings } = useAppData();
+
   return (
     <section className="relative overflow-hidden bg-accent px-6 py-20 text-center text-accent-foreground sm:py-28">
       <motion.div
@@ -29,7 +32,7 @@ export function WhatsAppCTASection() {
           equipe confirma disponibilidade e finaliza seu pedido com você.
         </p>
         <a
-          href={buildSimpleWhatsAppUrl()}
+          href={buildSimpleWhatsAppUrl(settings)}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-8 inline-flex items-center gap-2 bg-accent-foreground px-8 py-3 text-xs font-medium uppercase tracking-widest-xs text-accent transition-opacity hover:opacity-85"

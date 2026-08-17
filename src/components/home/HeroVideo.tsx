@@ -5,13 +5,14 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
-import { storeSettings } from "@/data/store-settings";
+import { useAppData } from "@/context/AppDataContext";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 export function HeroVideo() {
+  const { settings } = useAppData();
   const { heroVideoUrl, heroFallbackImage, heroTitle, heroSubtitle, heroButtonLabel, name } =
-    storeSettings;
+    settings;
 
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({

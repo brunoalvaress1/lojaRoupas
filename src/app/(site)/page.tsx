@@ -5,16 +5,19 @@ import { FeaturedSection } from "@/components/home/FeaturedSection";
 import { StoreExperienceSection } from "@/components/home/StoreExperienceSection";
 import { InstagramSection } from "@/components/home/InstagramSection";
 import { WhatsAppCTASection } from "@/components/home/WhatsAppCTASection";
+import { getProducts } from "@/lib/queries/products";
 
-export default function Home() {
+export default async function Home() {
+  const products = await getProducts();
+
   return (
     <>
       <HeroVideo />
-      <NoveltiesSection />
+      <NoveltiesSection products={products} />
       <CategoriesSection />
-      <FeaturedSection />
+      <FeaturedSection products={products} />
       <StoreExperienceSection />
-      <InstagramSection />
+      <InstagramSection products={products} />
       <WhatsAppCTASection />
     </>
   );

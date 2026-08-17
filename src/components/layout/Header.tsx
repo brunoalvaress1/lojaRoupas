@@ -1,13 +1,17 @@
+"use client";
+
 import Link from "next/link";
 import { Heart, MessageCircle, ShoppingBag } from "lucide-react";
 import { NAV_LINKS } from "./nav-links";
 import { SearchBox } from "./SearchBox";
 import { CartCount } from "./CartCount";
 import { AccountIcon } from "./AccountIcon";
-import { storeSettings } from "@/data/store-settings";
+import { useAppData } from "@/context/AppDataContext";
 import { buildSimpleWhatsAppUrl } from "@/lib/whatsapp";
 
 export function Header() {
+  const { settings } = useAppData();
+
   return (
     <header className="sticky top-0 z-40 hidden w-full border-b border-border bg-background/90 backdrop-blur md:block">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-8">
@@ -15,7 +19,7 @@ export function Header() {
           href="/"
           className="font-display text-2xl tracking-widest-xs"
         >
-          {storeSettings.name}
+          {settings.name}
         </Link>
 
         <nav className="flex items-center gap-9">
@@ -49,7 +53,7 @@ export function Header() {
             <CartCount />
           </Link>
           <a
-            href={buildSimpleWhatsAppUrl()}
+            href={buildSimpleWhatsAppUrl(settings)}
             target="_blank"
             rel="noopener noreferrer"
             aria-label="WhatsApp"

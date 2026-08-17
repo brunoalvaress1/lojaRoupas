@@ -9,24 +9,39 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
-import { useAdminAuthStore } from "@/store/admin-auth-store";
-import { products, getProductStock } from "@/data/products";
-import { categories } from "@/data/categories";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { getProductStock } from "@/lib/product-helpers";
 import { formatPrice } from "@/lib/format";
-import { storeSettings } from "@/data/store-settings";
 import { cn } from "@/lib/utils";
+import type { Category, Product, StoreSettings } from "@/types";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", icon: LayoutDashboard, active: true },
-  { label: "Produtos", icon: Shirt, active: false },
-  { label: "Categorias", icon: Tag, active: false },
-  { label: "Pedidos (WhatsApp)", icon: MessageCircle, active: false },
-  { label: "Configurações", icon: Settings, active: false },
+  { label: "Dashboard", icon: LayoutDashboard, href: "/admin" },
+  { label: "Produtos", icon: Shirt, href: "/admin/produtos" },
+  { label: "Categorias", icon: Tag, href: "/admin/categorias" },
+  { label: "Pedidos (WhatsApp)", icon: MessageCircle, href: null },
+  { label: "Configurações", icon: Settings, href: "/admin/configuracoes" },
 ];
 
-export function AdminDashboard() {
-  const adminName = useAdminAuthStore((s) => s.adminName);
-  const logout = useAdminAuthStore((s) => s.logout);
+export function AdminDashboard({
+  products,
+  categories,
+  settings,
+}: {
+  products: Product[];
+  categories: Category[];
+  settings: StoreSettings;
+}) {
+  const { user, signOut } = useAuth();
+  const router = useRouter();
+  const adminName = user?.name ?? null;
+
+  async function logout() {
+    await signOut();
+    router.push("/admin/login");
+    router.refresh();
+  }
 
   const activeProducts = products.filter((p) => p.active);
   const outOfStock = products.filter((p) => !getProductStock(p));
@@ -46,30 +61,34 @@ export function AdminDashboard() {
     <div className="flex min-h-svh bg-muted/40">
       <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-background px-5 py-6 md:flex">
         <p className="font-display text-lg tracking-widest-xs">
-          {storeSettings.name}
+          {settings.name}
           <span className="ml-1.5 text-xs text-muted-foreground">Admin</span>
         </p>
 
         <nav className="mt-10 flex flex-col gap-1">
-          {NAV_ITEMS.map((item) => (
-            <div
-              key={item.label}
-              className={cn(
-                "flex items-center gap-3 rounded px-3 py-2.5 text-sm",
-                item.active
-                  ? "bg-accent text-accent-foreground"
-                  : "cursor-not-allowed text-muted-foreground"
-              )}
-            >
-              <item.icon className="h-4 w-4" strokeWidth={1.5} />
-              {item.label}
-              {!item.active && (
-                <span className="ml-auto text-[10px] uppercase tracking-widest-xs text-muted-foreground/70">
+          {NAV_ITEMS.map((item) =>
+            item.href ? (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="flex items-center gap-3 rounded px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <item.icon className="h-4 w-4" strokeWidth={1.5} />
+                {item.label}
+              </Link>
+            ) : (
+              <div
+                key={item.label}
+                className="flex cursor-not-allowed items-center gap-3 rounded px-3 py-2.5 text-sm text-muted-foreground/60"
+              >
+                <item.icon className="h-4 w-4" strokeWidth={1.5} />
+                {item.label}
+                <span className="ml-auto text-[10px] uppercase tracking-widest-xs">
                   em breve
                 </span>
-              )}
-            </div>
-          ))}
+              </div>
+            )
+          )}
         </nav>
 
         <button
@@ -121,10 +140,10 @@ export function AdminDashboard() {
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <p className="text-sm font-medium">Produtos recentes</p>
               <Link
-                href="/colecao"
+                href="/admin/produtos"
                 className="text-xs text-muted-foreground underline underline-offset-4"
               >
-                Ver na loja
+                Ver todos
               </Link>
             </div>
             <div className="overflow-x-auto">
@@ -145,7 +164,14 @@ export function AdminDashboard() {
                     const inStock = getProductStock(product);
                     return (
                       <tr key={product.id} className="border-b border-border last:border-0">
-                        <td className="px-5 py-3">{product.name}</td>
+                        <td className="px-5 py-3">
+                          <Link
+                            href={`/admin/produtos/${product.id}`}
+                            className="hover:underline"
+                          >
+                            {product.name}
+                          </Link>
+                        </td>
                         <td className="px-5 py-3 text-muted-foreground">
                           {category?.name}
                         </td>
@@ -169,11 +195,6 @@ export function AdminDashboard() {
               </table>
             </div>
           </div>
-
-          <p className="mt-4 text-xs text-muted-foreground">
-            O cadastro e a edição de produtos, categorias e pedidos serão
-            habilitados na próxima etapa, junto da integração com o Supabase.
-          </p>
         </div>
       </div>
     </div>

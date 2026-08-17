@@ -1,18 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Heart, ShoppingBag, LogOut, User } from "lucide-react";
-import { useAuthStore } from "@/store/auth-store";
-import { useHasHydrated } from "@/hooks/use-has-hydrated";
+import { useAuth } from "@/context/AuthContext";
 
 export function AccountView() {
-  const currentUser = useAuthStore((s) => s.currentUser);
-  const logout = useAuthStore((s) => s.logout);
-  const hasHydrated = useHasHydrated();
+  const { user, loading, signOut } = useAuth();
+  const router = useRouter();
 
-  if (!hasHydrated) return null;
+  if (loading) return null;
 
-  if (!currentUser) {
+  if (!user) {
     return (
       <div className="mx-auto flex max-w-lg flex-col items-center px-6 py-24 text-center">
         <User className="h-10 w-10 text-muted-foreground" strokeWidth={1.2} />
@@ -34,11 +33,11 @@ export function AccountView() {
     <div className="mx-auto max-w-lg px-6 pb-20 pt-10 sm:pt-16">
       <div className="flex items-center gap-4">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted font-display text-xl">
-          {currentUser.name.charAt(0).toUpperCase()}
+          {user.name.charAt(0).toUpperCase()}
         </div>
         <div>
-          <p className="font-display text-xl">{currentUser.name}</p>
-          <p className="text-sm text-muted-foreground">{currentUser.email}</p>
+          <p className="font-display text-xl">{user.name}</p>
+          <p className="text-sm text-muted-foreground">{user.email}</p>
         </div>
       </div>
 
@@ -66,7 +65,10 @@ export function AccountView() {
       </div>
 
       <button
-        onClick={logout}
+        onClick={async () => {
+          await signOut();
+          router.refresh();
+        }}
         className="mt-8 flex items-center gap-2 text-xs uppercase tracking-widest-xs text-muted-foreground underline underline-offset-4"
       >
         <LogOut className="h-3.5 w-3.5" strokeWidth={1.5} />

@@ -1,11 +1,14 @@
+"use client";
+
 import Image from "next/image";
-import { storeSettings } from "@/data/store-settings";
-import { products } from "@/data/products";
+import { useAppData } from "@/context/AppDataContext";
 import { InstagramIcon } from "@/components/icons/InstagramIcon";
 import { Reveal } from "@/components/motion/Reveal";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
+import type { Product } from "@/types";
 
-export function InstagramSection() {
+export function InstagramSection({ products }: { products: Product[] }) {
+  const { settings } = useAppData();
   const images = products.slice(0, 6).map((p) => p.images[0]);
 
   return (
@@ -13,15 +16,15 @@ export function InstagramSection() {
       <Reveal className="mb-10 flex flex-col items-center gap-2 text-center">
         <InstagramIcon className="h-5 w-5" />
         <h2 className="font-display text-3xl sm:text-4xl">
-          Siga a {storeSettings.name}
+          Siga a {settings.name}
         </h2>
         <a
-          href={`https://instagram.com/${storeSettings.instagram.replace("@", "")}`}
+          href={`https://instagram.com/${settings.instagram.replace("@", "")}`}
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-muted-foreground underline underline-offset-4"
         >
-          {storeSettings.instagram}
+          {settings.instagram}
         </a>
       </Reveal>
 
@@ -29,7 +32,7 @@ export function InstagramSection() {
         {images.map((image, i) => (
           <StaggerItem key={i}>
             <a
-              href={`https://instagram.com/${storeSettings.instagram.replace("@", "")}`}
+              href={`https://instagram.com/${settings.instagram.replace("@", "")}`}
               target="_blank"
               rel="noopener noreferrer"
               className="group relative block aspect-square overflow-hidden"

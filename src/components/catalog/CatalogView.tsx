@@ -3,9 +3,9 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X, ChevronDown } from "lucide-react";
-import { products } from "@/data/products";
 import { ProductCard } from "@/components/product/ProductCard";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
+import type { Category, Product } from "@/types";
 import {
   FiltersPanel,
   DEFAULT_FILTERS,
@@ -21,7 +21,13 @@ const SORT_OPTIONS = [
 
 type SortId = (typeof SORT_OPTIONS)[number]["id"];
 
-export function CatalogView() {
+export function CatalogView({
+  products,
+  categories,
+}: {
+  products: Product[];
+  categories: Category[];
+}) {
   const searchParams = useSearchParams();
   const categoriaInicial = searchParams.get("categoria") ?? "todas";
   const busca = searchParams.get("busca")?.toLowerCase() ?? "";
@@ -45,14 +51,16 @@ export function CatalogView() {
     }
     if (filters.tamanhos.length > 0) {
       list = list.filter((p) =>
-        p.variants.some(
-          (v) => v.available && filters.tamanhos.includes(v.sizeId)
-        )
+        p.variants.some((v) => {
+          if (!v.available) return false;
+          const label = p.sizes.find((s) => s.id === v.sizeId)?.label;
+          return label ? filters.tamanhos.includes(label) : false;
+        })
       );
     }
     if (filters.cores.length > 0) {
       list = list.filter((p) =>
-        p.colors.some((c) => filters.cores.includes(c.id))
+        p.colors.some((c) => filters.cores.includes(c.name))
       );
     }
     list = list.filter(
@@ -86,7 +94,7 @@ export function CatalogView() {
     }
 
     return sorted;
-  }, [filters, sort, busca, novidades]);
+  }, [filters, sort, busca, novidades, products]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-16 pt-6 sm:px-8 sm:pt-10">
@@ -119,7 +127,12 @@ export function CatalogView() {
 
       <div className="grid grid-cols-1 gap-10 md:grid-cols-[220px_1fr]">
         <aside className="hidden md:block">
-          <FiltersPanel filters={filters} onChange={setFilters} />
+          <FiltersPanel
+            filters={filters}
+            onChange={setFilters}
+            categories={categories}
+            products={products}
+          />
         </aside>
 
         <div>
@@ -175,7 +188,12 @@ export function CatalogView() {
             </div>
 
             {mobilePanel === "filtros" ? (
-              <FiltersPanel filters={filters} onChange={setFilters} />
+              <FiltersPanel
+            filters={filters}
+            onChange={setFilters}
+            categories={categories}
+            products={products}
+          />
             ) : (
               <div className="flex flex-col gap-1">
                 {SORT_OPTIONS.map((o) => (

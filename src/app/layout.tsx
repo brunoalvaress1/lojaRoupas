@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
-import { storeSettings } from "@/data/store-settings";
+import { getStoreSettings } from "@/lib/queries/settings";
+import { AuthProvider } from "@/context/AuthContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -13,20 +14,24 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://example.com"),
-  title: {
-    default: `${storeSettings.name} — ${storeSettings.tagline}`,
-    template: `%s | ${storeSettings.name}`,
-  },
-  description:
-    "Loja de roupas premium. Descubra a coleção e monte seu pedido diretamente pelo WhatsApp.",
-  openGraph: {
-    title: storeSettings.name,
-    description: storeSettings.tagline,
-    images: [storeSettings.heroFallbackImage],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getStoreSettings();
+
+  return {
+    metadataBase: new URL("https://example.com"),
+    title: {
+      default: `${settings.name} — ${settings.tagline}`,
+      template: `%s | ${settings.name}`,
+    },
+    description:
+      "Loja de roupas premium. Descubra a coleção e monte seu pedido diretamente pelo WhatsApp.",
+    openGraph: {
+      title: settings.name,
+      description: settings.tagline,
+      images: settings.heroFallbackImage ? [settings.heroFallbackImage] : [],
+    },
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -35,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${inter.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

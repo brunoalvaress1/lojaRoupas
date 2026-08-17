@@ -1,10 +1,15 @@
 import type { MetadataRoute } from "next";
-import { products } from "@/data/products";
-import { categories } from "@/data/categories";
+import { getProductSlugsStatic } from "@/lib/queries/products";
+import { getCategoriesStatic } from "@/lib/queries/categories";
 
 const BASE_URL = "https://example.com";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [products, categories] = await Promise.all([
+    getProductSlugsStatic(),
+    getCategoriesStatic(),
+  ]);
+
   const staticRoutes = [
     "",
     "/colecao",
@@ -20,12 +25,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
   }));
 
-  const productRoutes = products
-    .filter((p) => p.active)
-    .map((p) => ({
-      url: `${BASE_URL}/produto/${p.slug}`,
-      lastModified: new Date(p.createdAt),
-    }));
+  const productRoutes = products.map((p) => ({
+    url: `${BASE_URL}/produto/${p.slug}`,
+    lastModified: new Date(p.createdAt),
+  }));
 
   const categoryRoutes = categories.map((c) => ({
     url: `${BASE_URL}/colecao?categoria=${c.slug}`,

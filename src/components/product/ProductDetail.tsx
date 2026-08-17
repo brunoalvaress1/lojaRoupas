@@ -2,16 +2,22 @@
 
 import { useMemo, useState } from "react";
 import { Minus, Plus, Check } from "lucide-react";
-import type { Product } from "@/types";
+import type { Product, SizeGuideRow } from "@/types";
 import { Price } from "@/components/shared/Price";
 import { FavoriteButton } from "./FavoriteButton";
 import { SizeGuideModal } from "./SizeGuideModal";
 import { ProductGallery } from "./ProductGallery";
-import { isVariantAvailable } from "@/data/products";
+import { isVariantAvailable } from "@/lib/product-helpers";
 import { useCartStore } from "@/store/cart-store";
 import { cn } from "@/lib/utils";
 
-export function ProductDetail({ product }: { product: Product }) {
+export function ProductDetail({
+  product,
+  sizeGuideRows,
+}: {
+  product: Product;
+  sizeGuideRows: SizeGuideRow[];
+}) {
   const [colorId, setColorId] = useState(product.colors[0]?.id ?? "");
   const [sizeId, setSizeId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -105,7 +111,7 @@ export function ProductDetail({ product }: { product: Product }) {
             <p className="text-xs font-medium uppercase tracking-widest-xs text-muted-foreground">
               Tamanho
             </p>
-            <SizeGuideModal />
+            <SizeGuideModal rows={sizeGuideRows} />
           </div>
           <div className="flex flex-wrap gap-2">
             {product.sizes.map((size) => {

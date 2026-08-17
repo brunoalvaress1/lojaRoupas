@@ -1,10 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { InstagramIcon } from "@/components/icons/InstagramIcon";
-import { storeSettings } from "@/data/store-settings";
+import { useAppData } from "@/context/AppDataContext";
 import { buildSimpleWhatsAppUrl } from "@/lib/whatsapp";
 
 export function Footer() {
+  const { settings: storeSettings } = useAppData();
+
   return (
     <footer className="border-t border-border bg-background pb-20 md:pb-0">
       <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 sm:px-8 md:grid-cols-4">
@@ -47,7 +51,7 @@ export function Footer() {
           </p>
           <div className="flex flex-col gap-3 text-sm">
             <a
-              href={buildSimpleWhatsAppUrl()}
+              href={buildSimpleWhatsAppUrl(storeSettings)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2"

@@ -3,11 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { categories } from "@/data/categories";
+import type { Category } from "@/types";
 
 const TALL_SLUGS = ["vestidos", "conjuntos"];
 
-export function CategoriesGrid() {
+export function CategoriesGrid({ categories }: { categories: Category[] }) {
   return (
     <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
       {categories.map((category, i) => (

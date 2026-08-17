@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { ShieldCheck, HeartHandshake, Sparkles, MessageCircle } from "lucide-react";
-import { storeSettings } from "@/data/store-settings";
+import { getStoreSettings } from "@/lib/queries/settings";
 import { InstagramIcon } from "@/components/icons/InstagramIcon";
 import { buildSimpleWhatsAppUrl } from "@/lib/whatsapp";
 
-export const metadata: Metadata = {
-  title: "Sobre a Loja",
-  description: `Conheça a história e os diferenciais da ${storeSettings.name}.`,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const storeSettings = await getStoreSettings();
+  return {
+    title: "Sobre a Loja",
+    description: `Conheça a história e os diferenciais da ${storeSettings.name}.`,
+  };
+}
 
 const DIFERENCIAIS = [
   {
@@ -28,7 +31,9 @@ const DIFERENCIAIS = [
   },
 ];
 
-export default function SobrePage() {
+export default async function SobrePage() {
+  const storeSettings = await getStoreSettings();
+
   return (
     <div>
       <section className="relative flex h-[50vh] min-h-[380px] items-end overflow-hidden bg-black text-white">
@@ -120,7 +125,7 @@ export default function SobrePage() {
                 {storeSettings.instagram}
               </a>
               <a
-                href={buildSimpleWhatsAppUrl()}
+                href={buildSimpleWhatsAppUrl(storeSettings)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2"

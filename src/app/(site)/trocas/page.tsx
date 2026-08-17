@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { RefreshCw, ClipboardCheck, MessageCircle, PackageCheck } from "lucide-react";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { buildSimpleWhatsAppUrl } from "@/lib/whatsapp";
+import { getStoreSettings } from "@/lib/queries/settings";
 
 export const metadata: Metadata = {
   title: "Trocas e Devoluções",
@@ -35,7 +36,9 @@ const ITEMS = [
   },
 ];
 
-export default function TrocasPage() {
+export default async function TrocasPage() {
+  const storeSettings = await getStoreSettings();
+
   return (
     <div className="mx-auto max-w-3xl px-4 pb-20 pt-6 sm:px-8 sm:pt-10">
       <Breadcrumbs
@@ -60,7 +63,7 @@ export default function TrocasPage() {
       </div>
 
       <a
-        href={buildSimpleWhatsAppUrl()}
+        href={buildSimpleWhatsAppUrl(storeSettings)}
         target="_blank"
         rel="noopener noreferrer"
         className="mt-12 inline-flex items-center gap-2 bg-accent px-8 py-3 text-xs font-medium uppercase tracking-widest-xs text-accent-foreground"

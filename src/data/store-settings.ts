@@ -1,13 +1,13 @@
 import type { SizeGuideRow, StoreSettings } from "@/types";
 
 export const storeSettings: StoreSettings = {
-  name: "LUMINA",
+  name: "Flu Flu Modas",
   tagline: "Vista sua essência.",
   whatsappNumber: "5511999999999",
   whatsappDefaultMessage:
     "Olá! Gostaria de verificar a disponibilidade dessas peças.",
-  instagram: "@lumina.store",
-  address: "Rua das Flores, 452 — Jardins, São Paulo/SP",
+  instagram: "@la_fluflu_modas",
+  address: "Av. Carlos Botelho, 1802 — Centro, São Carlos/SP",
   hours: "Seg a Sáb, das 10h às 20h",
   heroVideoUrl: "https://assets.mixkit.co/videos/34707/34707-720.mp4",
   heroFallbackImage: "/hero-poster.jpg",

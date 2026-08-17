@@ -1,11 +1,13 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/types";
 import { Price } from "@/components/shared/Price";
 import { Badge } from "@/components/shared/Badge";
 import { FavoriteButton } from "./FavoriteButton";
-import { getProductStock } from "@/data/products";
-import { categories } from "@/data/categories";
+import { getProductStock } from "@/lib/product-helpers";
+import { useAppData } from "@/context/AppDataContext";
 import { cn } from "@/lib/utils";
 
 export function ProductCard({
@@ -15,6 +17,7 @@ export function ProductCard({
   product: Product;
   priority?: boolean;
 }) {
+  const { categories } = useAppData();
   const inStock = getProductStock(product);
   const secondImage = product.images[1] ?? product.images[0];
   const category = categories.find((c) => c.slug === product.categorySlug);

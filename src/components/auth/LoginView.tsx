@@ -6,23 +6,25 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { Eye, EyeOff } from "lucide-react";
-import { useAuthStore } from "@/store/auth-store";
-import { storeSettings } from "@/data/store-settings";
+import { useAuth } from "@/context/AuthContext";
+import { useAppData } from "@/context/AppDataContext";
 import { cn } from "@/lib/utils";
 
 type Tab = "login" | "cadastro";
 
 export function LoginView() {
+  const { settings: storeSettings } = useAppData();
   const [tab, setTab] = useState<Tab>("login");
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/favoritos";
 
-  const login = useAuthStore((s) => s.login);
-  const register = useAuthStore((s) => s.register);
+  const { signIn, signUp } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -31,28 +33,40 @@ export function LoginView() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    const result = login(loginEmail, loginPassword);
+    setError(null);
+    setSubmitting(true);
+    const result = await signIn(loginEmail, loginPassword);
+    setSubmitting(false);
     if (!result.ok) {
       setError(result.error ?? "Não foi possível entrar.");
       return;
     }
     router.push(redirectTo);
+    router.refresh();
   }
 
-  function handleRegister(e: React.FormEvent) {
+  async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim() || !email.trim() || password.length < 4) {
-      setError("Preencha todos os campos. A senha deve ter ao menos 4 caracteres.");
+    setError(null);
+    if (!name.trim() || !email.trim() || password.length < 6) {
+      setError("Preencha todos os campos. A senha deve ter ao menos 6 caracteres.");
       return;
     }
-    const result = register(name.trim(), email.trim(), password);
+    setSubmitting(true);
+    const result = await signUp(name.trim(), email.trim(), password);
+    setSubmitting(false);
     if (!result.ok) {
       setError(result.error ?? "Não foi possível criar sua conta.");
       return;
     }
+    if (result.needsEmailConfirmation) {
+      setInfo("Enviamos um link de confirmação para o seu e-mail.");
+      return;
+    }
     router.push(redirectTo);
+    router.refresh();
   }
 
   return (
@@ -143,9 +157,10 @@ export function LoginView() {
                 </Link>
                 <button
                   type="submit"
-                  className="mt-2 bg-accent py-3.5 text-xs font-medium uppercase tracking-widest-xs text-accent-foreground transition-opacity hover:opacity-90"
+                  disabled={submitting}
+                  className="mt-2 bg-accent py-3.5 text-xs font-medium uppercase tracking-widest-xs text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
                 >
-                  Entrar
+                  {submitting ? "Entrando..." : "Entrar"}
                 </button>
               </motion.form>
             ) : (
@@ -178,11 +193,13 @@ export function LoginView() {
                   required
                 />
                 {error && <p className="text-xs text-red-600">{error}</p>}
+                {info && <p className="text-xs text-foreground">{info}</p>}
                 <button
                   type="submit"
-                  className="mt-2 bg-accent py-3.5 text-xs font-medium uppercase tracking-widest-xs text-accent-foreground transition-opacity hover:opacity-90"
+                  disabled={submitting}
+                  className="mt-2 bg-accent py-3.5 text-xs font-medium uppercase tracking-widest-xs text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
                 >
-                  Cadastrar
+                  {submitting ? "Criando conta..." : "Cadastrar"}
                 </button>
               </motion.form>
             )}

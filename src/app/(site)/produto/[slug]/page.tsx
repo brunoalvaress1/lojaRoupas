@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProductBySlug, products } from "@/data/products";
-import { categories } from "@/data/categories";
+import { getProductBySlug, getProductSlugsStatic } from "@/lib/queries/products";
+import { getCategories } from "@/lib/queries/categories";
+import { getSizeGuide } from "@/lib/queries/settings";
 import { ProductDetail } from "@/components/product/ProductDetail";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const products = await getProductSlugsStatic();
   return products.map((p) => ({ slug: p.slug }));
 }
 
@@ -15,7 +17,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) return {};
 
   return {
@@ -35,7 +37,11 @@ export default async function ProdutoPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const [product, categories, sizeGuideRows] = await Promise.all([
+    getProductBySlug(slug),
+    getCategories(),
+    getSizeGuide("feminino"),
+  ]);
   if (!product) notFound();
 
   const category = categories.find((c) => c.slug === product.categorySlug);
@@ -78,7 +84,7 @@ export default async function ProdutoPage({
         ]}
       />
       <div className="mt-6">
-        <ProductDetail product={product} />
+        <ProductDetail product={product} sizeGuideRows={sizeGuideRows} />
       </div>
     </div>
   );

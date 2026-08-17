@@ -1,22 +1,39 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAdminAuthStore } from "@/store/admin-auth-store";
-import { useHasHydrated } from "@/hooks/use-has-hydrated";
+import { useAuth } from "@/context/AuthContext";
+import { createClient } from "@/lib/supabase/client";
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useAdminAuthStore((s) => s.isAuthenticated);
-  const hasHydrated = useHasHydrated();
+  const { user, loading } = useAuth();
+  const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
+  const [checked, setChecked] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    if (hasHydrated && !isAuthenticated) {
+    if (loading) return;
+    if (!user) {
       router.replace("/admin/login");
+      return;
     }
-  }, [hasHydrated, isAuthenticated, router]);
+    supabase
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data) {
+          router.replace("/admin/login");
+          return;
+        }
+        setIsAdmin(true);
+        setChecked(true);
+      });
+  }, [loading, user, supabase, router]);
 
-  if (!hasHydrated || !isAuthenticated) return null;
+  if (!checked || !isAdmin) return null;
 
   return <>{children}</>;
 }

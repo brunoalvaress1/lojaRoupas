@@ -1,7 +1,6 @@
-import { sizeGuide } from "@/data/store-settings";
 import type { SizeGuideRow } from "@/types";
 
-export function SizeGuideTable({ rows = sizeGuide }: { rows?: SizeGuideRow[] }) {
+export function SizeGuideTable({ rows }: { rows: SizeGuideRow[] }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[360px] border-collapse text-sm">

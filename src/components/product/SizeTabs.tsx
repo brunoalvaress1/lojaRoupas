@@ -1,11 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { sizeGuide, sizeGuideMasculino } from "@/data/store-settings";
 import { SizeGuideTable } from "./SizeGuideTable";
 import { cn } from "@/lib/utils";
+import type { SizeGuideRow } from "@/types";
 
-export function SizeTabs() {
+export function SizeTabs({
+  feminino,
+  masculino,
+}: {
+  feminino: SizeGuideRow[];
+  masculino: SizeGuideRow[];
+}) {
   const [tab, setTab] = useState<"feminino" | "masculino">("feminino");
 
   return (
@@ -27,7 +33,7 @@ export function SizeTabs() {
         ))}
       </div>
 
-      <SizeGuideTable rows={tab === "feminino" ? sizeGuide : sizeGuideMasculino} />
+      <SizeGuideTable rows={tab === "feminino" ? feminino : masculino} />
     </div>
   );
 }

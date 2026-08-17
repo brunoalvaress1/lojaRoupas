@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 import { MessageCircle, MapPin, Clock } from "lucide-react";
-import { storeSettings } from "@/data/store-settings";
+import { getStoreSettings } from "@/lib/queries/settings";
 import { InstagramIcon } from "@/components/icons/InstagramIcon";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { buildSimpleWhatsAppUrl } from "@/lib/whatsapp";
 
-export const metadata: Metadata = {
-  title: "Contato",
-  description: `Fale com a ${storeSettings.name} pelo WhatsApp ou visite nossa loja.`,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const storeSettings = await getStoreSettings();
+  return {
+    title: "Contato",
+    description: `Fale com a ${storeSettings.name} pelo WhatsApp ou visite nossa loja.`,
+  };
+}
 
-export default function ContatoPage() {
+export default async function ContatoPage() {
+  const storeSettings = await getStoreSettings();
   const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(
     storeSettings.address
   )}&output=embed`;
@@ -23,7 +27,7 @@ export default function ContatoPage() {
       <div className="mt-10 grid grid-cols-1 gap-10 md:grid-cols-2">
         <div className="flex flex-col gap-6">
           <a
-            href={buildSimpleWhatsAppUrl()}
+            href={buildSimpleWhatsAppUrl(storeSettings)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-4 border border-border p-5 transition-colors hover:border-foreground"

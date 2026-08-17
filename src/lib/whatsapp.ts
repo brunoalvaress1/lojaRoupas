@@ -1,11 +1,10 @@
-import { storeSettings } from "@/data/store-settings";
 import { formatPrice } from "@/lib/format";
-import type { CartItem } from "@/types";
+import type { CartItem, StoreSettings } from "@/types";
 
-export function buildOrderMessage(items: CartItem[]) {
+export function buildOrderMessage(items: CartItem[], settings: StoreSettings) {
   const lines: string[] = [];
 
-  lines.push(`Olá, ${storeSettings.name}! Tenho interesse nas peças abaixo:`);
+  lines.push(`Olá, ${settings.name}! Tenho interesse nas peças abaixo:`);
   lines.push("");
 
   items.forEach((item, index) => {
@@ -23,16 +22,16 @@ export function buildOrderMessage(items: CartItem[]) {
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   lines.push(`TOTAL: ${formatPrice(total)}`);
   lines.push("");
-  lines.push(storeSettings.whatsappDefaultMessage);
+  lines.push(settings.whatsappDefaultMessage);
 
   return lines.join("\n");
 }
 
-export function buildWhatsAppUrl(message: string, phone = storeSettings.whatsappNumber) {
+export function buildWhatsAppUrl(message: string, phone: string) {
   const encoded = encodeURIComponent(message);
   return `https://wa.me/${phone}?text=${encoded}`;
 }
 
-export function buildSimpleWhatsAppUrl() {
-  return buildWhatsAppUrl(storeSettings.whatsappDefaultMessage);
+export function buildSimpleWhatsAppUrl(settings: StoreSettings) {
+  return buildWhatsAppUrl(settings.whatsappDefaultMessage, settings.whatsappNumber);
 }

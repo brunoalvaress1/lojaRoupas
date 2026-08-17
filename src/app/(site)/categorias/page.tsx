@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
-import { categories } from "@/data/categories";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { CategoriesGrid } from "@/components/catalog/CategoriesGrid";
+import { getCategories } from "@/lib/queries/categories";
 
 export const metadata: Metadata = {
   title: "Categorias",
   description: "Navegue pelas categorias da coleção.",
 };
 
-export default function CategoriasPage() {
+export default async function CategoriasPage() {
+  const categories = await getCategories();
+
   return (
     <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-8 sm:pt-10">
       <Breadcrumbs items={[{ label: "Início", href: "/" }, { label: "Categorias" }]} />
@@ -17,7 +19,7 @@ export default function CategoriasPage() {
         {categories.length} coleções organizadas para você encontrar sua próxima peça favorita.
       </p>
 
-      <CategoriesGrid />
+      <CategoriesGrid categories={categories} />
     </div>
   );
 }

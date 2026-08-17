@@ -7,10 +7,12 @@ import { CartItemRow } from "./CartItemRow";
 import { formatPrice } from "@/lib/format";
 import { buildOrderMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 import { useHasHydrated } from "@/hooks/use-has-hydrated";
+import { useAppData } from "@/context/AppDataContext";
 
 export function CartView() {
   const items = useCartStore((s) => s.items);
   const hasHydrated = useHasHydrated();
+  const { settings } = useAppData();
   const { totalPrice } = cartTotals(items);
 
   if (!hasHydrated) return null;
@@ -33,7 +35,10 @@ export function CartView() {
     );
   }
 
-  const whatsappUrl = buildWhatsAppUrl(buildOrderMessage(items));
+  const whatsappUrl = buildWhatsAppUrl(
+    buildOrderMessage(items, settings),
+    settings.whatsappNumber
+  );
 
   return (
     <div className="mx-auto max-w-4xl px-4 pb-24 pt-6 sm:px-8 sm:pt-10">

@@ -1,9 +1,9 @@
-import { products } from "@/data/products";
 import { ProductCard } from "@/components/product/ProductCard";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
+import type { Product } from "@/types";
 
-export function FeaturedSection() {
+export function FeaturedSection({ products }: { products: Product[] }) {
   const featured = products.filter((p) => p.isFeatured && p.active).slice(0, 8);
 
   if (featured.length === 0) return null;

@@ -1,9 +1,9 @@
-import { products } from "@/data/products";
 import { ProductCard } from "@/components/product/ProductCard";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
+import type { Product } from "@/types";
 
-export function NoveltiesSection() {
+export function NoveltiesSection({ products }: { products: Product[] }) {
   const novelties = products.filter((p) => p.isNew && p.active).slice(0, 8);
 
   if (novelties.length === 0) return null;

@@ -6,14 +6,14 @@ import { InstagramIcon } from "@/components/icons/InstagramIcon";
 import { useState } from "react";
 import { NAV_LINKS } from "./nav-links";
 import { CartCount } from "./CartCount";
-import { storeSettings } from "@/data/store-settings";
 import { buildSimpleWhatsAppUrl } from "@/lib/whatsapp";
-import { categories } from "@/data/categories";
-import { useAuthStore } from "@/store/auth-store";
+import { useAppData } from "@/context/AppDataContext";
+import { useAuth } from "@/context/AuthContext";
 
 export function MobileHeader() {
   const [open, setOpen] = useState(false);
-  const currentUser = useAuthStore((s) => s.currentUser);
+  const { user: currentUser } = useAuth();
+  const { settings: storeSettings, categories } = useAppData();
 
   return (
     <>
@@ -94,7 +94,7 @@ export function MobileHeader() {
                 {currentUser ? currentUser.name.split(" ")[0] : "Entrar / Cadastrar"}
               </Link>
               <a
-                href={buildSimpleWhatsAppUrl()}
+                href={buildSimpleWhatsAppUrl(storeSettings)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm"

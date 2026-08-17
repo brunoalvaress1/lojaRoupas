@@ -1,31 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
-import {
-  useAdminAuthStore,
-  ADMIN_DEMO_EMAIL,
-  ADMIN_DEMO_PASSWORD,
-} from "@/store/admin-auth-store";
-import { storeSettings } from "@/data/store-settings";
+import { createClient } from "@/lib/supabase/client";
+import type { StoreSettings } from "@/types";
 
-export function AdminLoginView() {
+export function AdminLoginView({ settings }: { settings: StoreSettings }) {
   const router = useRouter();
-  const login = useAdminAuthStore((s) => s.login);
+  const supabase = useMemo(() => createClient(), []);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const result = login(email, password);
-    if (!result.ok) {
-      setError(result.error ?? "Não foi possível entrar.");
+    setError(null);
+    setSubmitting(true);
+
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError || !data.user) {
+      setSubmitting(false);
+      setError("E-mail ou senha inválidos.");
       return;
     }
+
+    const { data: admin } = await supabase
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", data.user.id)
+      .maybeSingle();
+
+    if (!admin) {
+      await supabase.auth.signOut();
+      setSubmitting(false);
+      setError("Esta conta não tem permissão de administrador.");
+      return;
+    }
+
     router.push("/admin");
+    router.refresh();
   }
 
   return (
@@ -36,7 +56,7 @@ export function AdminLoginView() {
             <Lock className="h-5 w-5" strokeWidth={1.5} />
           </div>
           <p className="mt-4 font-display text-2xl tracking-widest-xs">
-            {storeSettings.name}
+            {settings.name}
           </p>
           <p className="mt-1 text-xs uppercase tracking-widest-xs text-white/50">
             Painel administrativo
@@ -73,20 +93,17 @@ export function AdminLoginView() {
 
           <button
             type="submit"
-            className="mt-2 bg-white py-3.5 text-xs font-medium uppercase tracking-widest-xs text-black transition-opacity hover:opacity-90"
+            disabled={submitting}
+            className="mt-2 bg-white py-3.5 text-xs font-medium uppercase tracking-widest-xs text-black transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            Entrar
+            {submitting ? "Entrando..." : "Entrar"}
           </button>
         </form>
 
         <p className="mt-6 text-center text-[11px] text-white/40">
-          Acesso restrito à equipe {storeSettings.name}. Contas de administrador
+          Acesso restrito à equipe {settings.name}. Contas de administrador
           não podem ser criadas publicamente.
         </p>
-
-        <div className="mt-6 rounded border border-white/10 bg-white/5 px-4 py-3 text-center text-[11px] text-white/50">
-          Demonstração: {ADMIN_DEMO_EMAIL} / {ADMIN_DEMO_PASSWORD}
-        </div>
 
         <Link
           href="/"

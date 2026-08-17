@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { Heart } from "lucide-react";
-import { useHasHydrated } from "@/hooks/use-has-hydrated";
-import { useFavoritesStore } from "@/store/favorites-store";
-import { useAuthStore } from "@/store/auth-store";
+import { useAuth } from "@/context/AuthContext";
+import { useFavorites } from "@/context/FavoritesContext";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { cn } from "@/lib/utils";
 
@@ -17,21 +16,20 @@ export function FavoriteButton({
   className?: string;
   size?: "sm" | "lg";
 }) {
-  const hasHydrated = useHasHydrated();
-  const isFavorite = useFavoritesStore((s) => s.isFavorite(productId));
-  const toggle = useFavoritesStore((s) => s.toggle);
-  const currentUser = useAuthStore((s) => s.currentUser);
+  const { user } = useAuth();
+  const { isFavorite, toggle } = useFavorites();
   const [gateOpen, setGateOpen] = useState(false);
+  const favorited = isFavorite(productId);
 
   return (
     <>
       <button
         type="button"
-        aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+        aria-label={favorited ? "Remover dos favoritos" : "Adicionar aos favoritos"}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          if (!currentUser) {
+          if (!user) {
             setGateOpen(true);
             return;
           }
@@ -46,7 +44,7 @@ export function FavoriteButton({
         <Heart
           className={cn(size === "sm" ? "h-4 w-4" : "h-5 w-5")}
           strokeWidth={1.5}
-          fill={hasHydrated && currentUser && isFavorite ? "currentColor" : "none"}
+          fill={user && favorited ? "currentColor" : "none"}
         />
       </button>
 
