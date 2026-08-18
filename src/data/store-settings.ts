@@ -1,7 +1,7 @@
 import type { SizeGuideRow, StoreSettings } from "@/types";
 
 export const storeSettings: StoreSettings = {
-  name: "Flu Flu Modas",
+  name: "La Flu Flu Modas",
   tagline: "Vista sua essência.",
   whatsappNumber: "5511999999999",
   whatsappDefaultMessage:

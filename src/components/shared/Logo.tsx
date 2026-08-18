@@ -18,7 +18,7 @@ export function Logo({
   return (
     <Image
       src={isIcon ? "/logo-fluflu-crown.png" : "/logo-fluflu-modas.png"}
-      alt="Flu Flu Modas"
+      alt="La Flu Flu Modas"
       width={Math.round(height * (isIcon ? ICON_ASPECT : ASPECT))}
       height={height}
       className={cn("object-contain", className)}
