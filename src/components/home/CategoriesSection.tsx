@@ -11,76 +11,68 @@ export function CategoriesSection() {
   const { categories } = useAppData();
 
   return (
-    <section className="bg-muted/60 py-16 sm:py-24">
+    <section className="py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-6 sm:px-8">
         <SectionHeading
           eyebrow="Explore"
           title="Categorias"
           subtitle="Encontre exatamente o que você procura."
           action={{ label: "Ver todas", href: "/categorias" }}
-          className="mb-10"
+          className="mb-8 sm:mb-10"
         />
+      </div>
 
-        <div className="-mx-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-6 pb-2 no-scrollbar sm:mx-0 sm:gap-4 sm:px-0">
-          {categories.map((category, i) => (
-            <CategoryTile
-              key={category.id}
-              category={category}
-              index={i + 1}
-              className="w-[38vw] shrink-0 snap-start sm:w-[200px] lg:w-[220px]"
-              delay={i * 0.06}
-            />
-          ))}
-        </div>
+      <div className="border-y border-border">
+        {categories.map((category, i) => (
+          <CategoryRow key={category.id} category={category} index={i + 1} delay={i * 0.05} />
+        ))}
       </div>
     </section>
   );
 }
 
-function CategoryTile({
+function CategoryRow({
   category,
   index,
-  className,
   delay,
 }: {
   category: Category;
   index: number;
-  className: string;
   delay: number;
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 28 }}
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay }}
-      className={`aspect-[3/4] ${className}`}
+      viewport={{ once: true, amount: 0.4 }}
+      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay }}
+      className="border-b border-border last:border-b-0"
     >
       <Link
         href={`/colecao?categoria=${category.slug}`}
-        className="group relative block h-full w-full overflow-hidden bg-surface"
+        className="group relative flex items-center justify-between overflow-hidden px-6 py-6 sm:px-8 sm:py-9"
       >
         <Image
           src={category.image}
           alt={category.name}
           fill
-          sizes="(max-width: 768px) 40vw, 20vw"
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+          sizes="100vw"
+          className="object-cover opacity-15 transition-[opacity,transform] duration-500 ease-out group-hover:scale-105 group-hover:opacity-100"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent transition-opacity duration-500 group-hover:from-black/75" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/40 transition-opacity duration-500 group-hover:opacity-0 sm:via-background/70" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
-        <span className="absolute left-4 top-4 font-display text-xs text-white/70">
-          {String(index).padStart(2, "0")}
-        </span>
-
-        <div className="absolute inset-x-4 bottom-4 flex items-center justify-between overflow-hidden">
-          <span className="font-display text-lg text-white sm:text-xl">
+        <span className="relative z-10 flex items-baseline gap-4">
+          <span className="font-display text-xs text-muted-foreground/70 transition-colors duration-500 group-hover:text-white/60">
+            {String(index).padStart(2, "0")}
+          </span>
+          <span className="font-display text-3xl transition-colors duration-500 group-hover:text-white sm:text-5xl">
             {category.name}
           </span>
-          <span className="translate-x-2 text-white opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">
-            →
-          </span>
-        </div>
+        </span>
+        <span className="relative z-10 translate-x-2 text-xl text-foreground opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 group-hover:text-white">
+          →
+        </span>
       </Link>
     </motion.div>
   );

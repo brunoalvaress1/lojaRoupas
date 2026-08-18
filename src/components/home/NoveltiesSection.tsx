@@ -5,26 +5,29 @@ import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 import type { Product } from "@/types";
 
 export function NoveltiesSection({ products }: { products: Product[] }) {
-  const novelties = products.filter((p) => p.isNew && p.active).slice(0, 3);
+  const novelties = products.filter((p) => p.isNew && p.active).slice(0, 6);
 
   if (novelties.length === 0) return null;
 
   return (
-    <section className="mx-auto max-w-7xl px-6 py-16 sm:px-8 sm:py-24">
+    <section className="mx-auto max-w-7xl py-16 sm:py-24">
       <SectionHeading
         eyebrow="Recém-chegados"
         title="Novidades"
-        subtitle="Peças selecionadas que acabaram de chegar na loja."
+        subtitle="Peças selecionadas que acabaram de chegar na loja. Deslize para ver mais."
         action={{ label: "Ver tudo", href: "/colecao?novidades=1" }}
-        className="mb-10"
+        className="mb-10 px-6 sm:px-8"
       />
-      <StaggerGroup className="grid grid-cols-2 gap-x-4 gap-y-8 lg:grid-cols-4">
+      <StaggerGroup className="no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 sm:gap-6 sm:px-8">
         {novelties.map((product, i) => (
-          <StaggerItem key={product.id}>
+          <StaggerItem
+            key={product.id}
+            className="w-[58vw] shrink-0 snap-start sm:w-[260px]"
+          >
             <ProductCard product={product} priority={i < 2} />
           </StaggerItem>
         ))}
-        <StaggerItem>
+        <StaggerItem className="w-[58vw] shrink-0 snap-start sm:w-[260px]">
           <ViewAllCard href="/colecao?novidades=1" label="Ver tudo" />
         </StaggerItem>
       </StaggerGroup>

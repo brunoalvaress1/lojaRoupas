@@ -197,8 +197,8 @@ export function LoginView() {
               )}
             >
               <Image
-                src="/foraDaLoja.jpeg"
-                alt={`Fachada da loja ${settings.name}`}
+                src={tab === "cadastro" ? "/dentroloja1.jpeg" : "/foraDaLoja.jpeg"}
+                alt={`Ambiente da loja ${settings.name}`}
                 fill
                 sizes="100vw"
                 className="animate-ken-burns object-cover"
@@ -222,7 +222,7 @@ export function LoginView() {
               </p>
             </div>
 
-            <div className="flex flex-1 items-center justify-center overflow-y-auto px-6 py-10">
+            <div className="flex flex-1 items-start justify-center overflow-y-auto px-6 py-10">
               <div className="w-full max-w-sm">
                 <AuthPanel {...panelProps} />
               </div>
@@ -282,7 +282,8 @@ function AuthPanel({
   return (
     <>
       <Link href="/">
-        <Logo height={44} />
+        <Logo height={44} className="hidden sm:block" />
+        <Logo height={40} variant="icon" className="sm:hidden" />
       </Link>
 
       <div className="mt-10 mb-8 flex border-b border-border">
