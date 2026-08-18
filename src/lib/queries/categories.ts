@@ -21,6 +21,11 @@ function mapCategory(c: {
   };
 }
 
+/**
+ * Admin-only: session-bound client so RLS's `is_admin()` clause also
+ * returns inactive categories. Using this in a public page forces
+ * per-request dynamic rendering — use getPublicCategories there instead.
+ */
 export const getCategories = cache(async (): Promise<Category[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -32,8 +37,12 @@ export const getCategories = cache(async (): Promise<Category[]> => {
   return data.map(mapCategory);
 });
 
-/** For generateStaticParams / sitemap.ts — no request context at build time. */
-export async function getCategoriesStatic(): Promise<Category[]> {
+/**
+ * Public storefront + generateStaticParams/sitemap.ts: anon client, only
+ * active categories, no `cookies()` dependency so the page can be
+ * statically cached and revalidated on demand.
+ */
+export const getPublicCategories = cache(async (): Promise<Category[]> => {
   const supabase = createStaticClient();
   const { data, error } = await supabase
     .from("categories")
@@ -42,4 +51,4 @@ export async function getCategoriesStatic(): Promise<Category[]> {
 
   if (error) throw error;
   return data.map(mapCategory);
-}
+});

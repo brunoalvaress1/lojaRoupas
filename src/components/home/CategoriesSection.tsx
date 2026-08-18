@@ -7,12 +7,8 @@ import { useAppData } from "@/context/AppDataContext";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import type { Category } from "@/types";
 
-const FEATURED_SLUGS = ["vestidos", "conjuntos"];
-
 export function CategoriesSection() {
   const { categories } = useAppData();
-  const featured = categories.filter((c) => FEATURED_SLUGS.includes(c.slug));
-  const rest = categories.filter((c) => !FEATURED_SLUGS.includes(c.slug));
 
   return (
     <section className="bg-muted/60 py-16 sm:py-24">
@@ -25,26 +21,14 @@ export function CategoriesSection() {
           className="mb-10"
         />
 
-        <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          {featured.map((category, i) => (
+        <div className="-mx-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-6 pb-2 no-scrollbar sm:mx-0 sm:gap-4 sm:px-0">
+          {categories.map((category, i) => (
             <CategoryTile
               key={category.id}
               category={category}
               index={i + 1}
-              className="aspect-[3/4] sm:aspect-[16/11]"
-              delay={i * 0.08}
-            />
-          ))}
-        </div>
-
-        <div className="mt-3 grid grid-cols-3 gap-3 sm:mt-4 sm:grid-cols-6 sm:gap-4">
-          {rest.map((category, i) => (
-            <CategoryTile
-              key={category.id}
-              category={category}
-              index={featured.length + i + 1}
-              className="aspect-[3/4]"
-              delay={0.16 + i * 0.05}
+              className="w-[38vw] shrink-0 snap-start sm:w-[200px] lg:w-[220px]"
+              delay={i * 0.06}
             />
           ))}
         </div>
@@ -70,7 +54,7 @@ function CategoryTile({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay }}
-      className={className}
+      className={`aspect-[3/4] ${className}`}
     >
       <Link
         href={`/colecao?categoria=${category.slug}`}
@@ -80,7 +64,7 @@ function CategoryTile({
           src={category.image}
           alt={category.name}
           fill
-          sizes="(max-width: 768px) 50vw, 25vw"
+          sizes="(max-width: 768px) 40vw, 20vw"
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent transition-opacity duration-500 group-hover:from-black/75" />

@@ -5,12 +5,12 @@ import { Footer } from "@/components/layout/Footer";
 import { AppDataProvider } from "@/context/AppDataContext";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 import { getStoreSettings } from "@/lib/queries/settings";
-import { getCategories } from "@/lib/queries/categories";
+import { getPublicCategories } from "@/lib/queries/categories";
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const [settings, categories] = await Promise.all([
     getStoreSettings(),
-    getCategories(),
+    getPublicCategories(),
   ]);
 
   return (

@@ -9,8 +9,10 @@ export const storeSettings: StoreSettings = {
   instagram: "@la_fluflu_modas",
   address: "Av. Carlos Botelho, 1802 — Centro, São Carlos/SP",
   hours: "Seg a Sáb, das 10h às 20h",
-  heroVideoUrl: "https://assets.mixkit.co/videos/34707/34707-720.mp4",
-  heroFallbackImage: "/hero-poster.jpg",
+  heroVideoUrl:
+    "https://dtipzqbeuueiultgcorj.supabase.co/storage/v1/object/public/site-media/hero-video.mp4?v=2",
+  heroFallbackImage:
+    "https://dtipzqbeuueiultgcorj.supabase.co/storage/v1/object/public/site-media/hero-fallback.jpg?v=2",
   heroTitle: "Estilo que te representa.",
   heroSubtitle: "Mais que moda, uma experiência.",
   heroButtonLabel: "CONHEÇA A COLEÇÃO",

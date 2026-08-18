@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProductBySlug, getProductSlugsStatic } from "@/lib/queries/products";
-import { getCategories } from "@/lib/queries/categories";
+import { getPublicCategories } from "@/lib/queries/categories";
 import { getSizeGuide } from "@/lib/queries/settings";
 import { ProductDetail } from "@/components/product/ProductDetail";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
@@ -39,7 +39,7 @@ export default async function ProdutoPage({
   const { slug } = await params;
   const [product, categories, sizeGuideRows] = await Promise.all([
     getProductBySlug(slug),
-    getCategories(),
+    getPublicCategories(),
     getSizeGuide("feminino"),
   ]);
   if (!product) notFound();

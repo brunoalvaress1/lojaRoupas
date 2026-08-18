@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { CategoriesGrid } from "@/components/catalog/CategoriesGrid";
-import { getCategories } from "@/lib/queries/categories";
+import { getPublicCategories } from "@/lib/queries/categories";
 
 export const metadata: Metadata = {
   title: "Categorias",
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CategoriasPage() {
-  const categories = await getCategories();
+  const categories = await getPublicCategories();
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-8 sm:pt-10">

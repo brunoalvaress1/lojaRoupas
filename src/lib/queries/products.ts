@@ -70,6 +70,11 @@ function mapProduct(row: ProductRow): Product {
   };
 }
 
+/**
+ * Admin-only: uses the session-bound client so RLS's `is_admin()` clause
+ * also returns inactive/draft products. Never use this for public pages —
+ * it forces the route into per-request dynamic rendering.
+ */
 export const getProducts = cache(async (): Promise<Product[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -81,21 +86,7 @@ export const getProducts = cache(async (): Promise<Product[]> => {
   return (data as unknown as ProductRow[]).map(mapProduct);
 });
 
-export const getProductBySlug = cache(
-  async (slug: string): Promise<Product | null> => {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select(PRODUCT_SELECT)
-      .eq("slug", slug)
-      .maybeSingle();
-
-    if (error) throw error;
-    if (!data) return null;
-    return mapProduct(data as unknown as ProductRow);
-  }
-);
-
+/** Admin-only equivalent of getProductBySlug — see getProducts note. */
 export const getProductById = cache(async (id: string): Promise<Product | null> => {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -108,6 +99,37 @@ export const getProductById = cache(async (id: string): Promise<Product | null> 
   if (!data) return null;
   return mapProduct(data as unknown as ProductRow);
 });
+
+/**
+ * Public storefront: anon client, only ever sees active products (RLS),
+ * and carries no `cookies()` dependency so the page can be statically
+ * cached and revalidated on demand instead of re-fetched every request.
+ */
+export const getPublicProducts = cache(async (): Promise<Product[]> => {
+  const supabase = createStaticClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(PRODUCT_SELECT)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return (data as unknown as ProductRow[]).map(mapProduct);
+});
+
+export const getProductBySlug = cache(
+  async (slug: string): Promise<Product | null> => {
+    const supabase = createStaticClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select(PRODUCT_SELECT)
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+    return mapProduct(data as unknown as ProductRow);
+  }
+);
 
 /**
  * For generateStaticParams / sitemap.ts — these run at build time with no

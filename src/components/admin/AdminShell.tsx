@@ -90,14 +90,14 @@ export function AdminShell({
         </button>
       </aside>
 
-      <div className="flex-1">
-        <header className="flex items-center justify-between border-b border-border bg-background px-6 py-4">
-          <div>
-            <p className="text-sm font-medium">{title}</p>
-            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+      <div className="min-w-0 flex-1">
+        <header className="flex items-center justify-between border-b border-border bg-background px-4 py-4 sm:px-6">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">{title}</p>
+            {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm">{user?.name}</span>
+          <div className="flex shrink-0 items-center gap-3">
+            <span className="hidden text-sm sm:inline">{user?.name}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted font-display text-sm">
               {user?.name?.charAt(0) ?? "A"}
             </div>
@@ -111,8 +111,28 @@ export function AdminShell({
           </div>
         </header>
 
-        <div className="p-6">{children}</div>
+        <div className="p-4 pb-24 sm:p-6 md:pb-6">{children}</div>
       </div>
+
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-center justify-around border-t border-border bg-background/95 backdrop-blur md:hidden">
+        {NAV_ITEMS.filter((item) => item.href).map((item) => {
+          const active =
+            item.href && pathname.startsWith(item.href) && (item.href !== "/admin" || pathname === "/admin");
+          return (
+            <Link
+              key={item.label}
+              href={item.href!}
+              className={cn(
+                "flex flex-col items-center gap-1 px-2 text-[10px] uppercase tracking-widest-xs",
+                active ? "text-foreground" : "text-muted-foreground"
+              )}
+            >
+              <item.icon className="h-5 w-5" strokeWidth={active ? 2 : 1.5} />
+              {item.label.split(" ")[0]}
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }

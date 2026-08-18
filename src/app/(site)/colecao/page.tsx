@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { CatalogView } from "@/components/catalog/CatalogView";
-import { getProducts } from "@/lib/queries/products";
-import { getCategories } from "@/lib/queries/categories";
+import { getPublicProducts } from "@/lib/queries/products";
+import { getPublicCategories } from "@/lib/queries/categories";
 
 export const metadata: Metadata = {
   title: "Coleção",
@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 
 export default async function ColecaoPage() {
   const [products, categories] = await Promise.all([
-    getProducts(),
-    getCategories(),
+    getPublicProducts(),
+    getPublicCategories(),
   ]);
 
   return (
