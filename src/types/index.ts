@@ -19,6 +19,8 @@ export interface ProductVariant {
 export interface ProductImage {
   url: string;
   alt: string;
+  /** Color this photo belongs to; null/undefined means it shows for every color. */
+  colorId?: string | null;
 }
 
 export interface Product {

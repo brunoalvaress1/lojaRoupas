@@ -25,6 +25,7 @@ interface VariantInput {
 interface ExistingImage {
   url: string;
   alt: string;
+  colorTempId: string | null;
 }
 
 export interface ProductFormState {
@@ -64,33 +65,15 @@ async function replaceChildren(
   const colors = parseJson<ColorInput[]>(formData, "colorsJson", []);
   const sizes = parseJson<SizeInput[]>(formData, "sizesJson", []);
   const variants = parseJson<VariantInput[]>(formData, "variantsJson", []);
-  const newImages = formData.getAll("newImages").filter(
+  const newImageFiles = formData.getAll("newImages").filter(
     (f): f is File => f instanceof File && f.size > 0
   );
+  const newImageColorTempIds = formData.getAll("newImagesColorTempId").map(String);
 
   await supabase.from("product_images").delete().eq("product_id", productId);
   await supabase.from("product_variants").delete().eq("product_id", productId);
   await supabase.from("product_colors").delete().eq("product_id", productId);
   await supabase.from("product_sizes").delete().eq("product_id", productId);
-
-  const uploadedUrls = await Promise.all(
-    newImages.map((file) => uploadProductImage(supabase, productId, file))
-  );
-  const allImages = [
-    ...keepImages,
-    ...uploadedUrls.map((url) => ({ url, alt: "" })),
-  ];
-  if (allImages.length > 0) {
-    const { error } = await supabase.from("product_images").insert(
-      allImages.map((img, i) => ({
-        product_id: productId,
-        url: img.url,
-        alt: img.alt || null,
-        position: i,
-      }))
-    );
-    if (error) throw error;
-  }
 
   const colorIdByTempId = new Map<string, string>();
   if (colors.length > 0) {
@@ -107,6 +90,30 @@ async function replaceChildren(
       .select("id");
     if (colorErr) throw colorErr;
     colors.forEach((c, i) => colorIdByTempId.set(c.tempId, colorRows[i].id as string));
+  }
+
+  const uploadedUrls = await Promise.all(
+    newImageFiles.map((file) => uploadProductImage(supabase, productId, file))
+  );
+  const allImages = [
+    ...keepImages,
+    ...uploadedUrls.map((url, i) => ({
+      url,
+      alt: "",
+      colorTempId: newImageColorTempIds[i] || null,
+    })),
+  ];
+  if (allImages.length > 0) {
+    const { error } = await supabase.from("product_images").insert(
+      allImages.map((img, i) => ({
+        product_id: productId,
+        url: img.url,
+        alt: img.alt || null,
+        position: i,
+        color_id: img.colorTempId ? colorIdByTempId.get(img.colorTempId) ?? null : null,
+      }))
+    );
+    if (error) throw error;
   }
 
   const sizeIdByTempId = new Map<string, string>();

@@ -384,20 +384,6 @@ function AuthPanel({
         )}
       </AnimatePresence>
 
-      <div className="my-8 flex items-center gap-4">
-        <div className="h-px flex-1 bg-border" />
-        <span className="text-xs text-muted-foreground">ou entrar com</span>
-        <div className="h-px flex-1 bg-border" />
-      </div>
-
-      <div className="flex gap-3">
-        <SocialButton label="Google">G</SocialButton>
-        <SocialButton label="Facebook">f</SocialButton>
-      </div>
-      <p className="mt-3 text-center text-[11px] text-muted-foreground">
-        Login social disponível em breve.
-      </p>
-
       <p className="mt-8 text-center text-xs text-muted-foreground">
         {tab === "login" ? (
           <>
@@ -495,24 +481,3 @@ function PasswordField({
   );
 }
 
-function SocialButton({
-  children,
-  label,
-}: {
-  children: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      disabled
-      aria-label={label}
-      className="flex flex-1 cursor-not-allowed items-center justify-center gap-2 border border-border py-3 text-sm text-muted-foreground opacity-60"
-    >
-      <span className="flex h-5 w-5 items-center justify-center rounded-full border border-current text-[11px] font-semibold">
-        {children}
-      </span>
-      {label}
-    </button>
-  );
-}

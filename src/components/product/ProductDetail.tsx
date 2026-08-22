@@ -37,6 +37,13 @@ export function ProductDetail({
   const canAdd = sizeId !== null && isVariantAvailable(product, colorId, sizeId);
   const activePrice = product.promoPrice ?? product.price;
 
+  const galleryImages = useMemo(() => {
+    const forColor = product.images.filter(
+      (img) => !img.colorId || img.colorId === colorId
+    );
+    return forColor.length > 0 ? forColor : product.images;
+  }, [product.images, colorId]);
+
   function handleAddToCart() {
     if (!canAdd || !sizeId) return;
     const color = product.colors.find((c) => c.id === colorId);
@@ -62,7 +69,7 @@ export function ProductDetail({
 
   return (
     <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-16">
-      <ProductGallery images={product.images} />
+      <ProductGallery key={colorId} images={galleryImages} />
 
       <div className="max-w-lg">
         <h1 className="font-display text-2xl sm:text-3xl">{product.name}</h1>

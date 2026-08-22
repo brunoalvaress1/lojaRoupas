@@ -10,10 +10,21 @@ import type { Category, Product } from "@/types";
 
 const initialState: ProductFormState = {};
 
+interface ExistingImage {
+  url: string;
+  alt: string;
+}
+interface NewImage {
+  id: string;
+  file: File;
+  preview: string;
+}
 interface ColorRow {
   tempId: string;
   name: string;
   hex: string;
+  existingImages: ExistingImage[];
+  newImages: NewImage[];
 }
 interface SizeRow {
   tempId: string;
@@ -24,10 +35,6 @@ interface VariantCell {
   sizeTempId: string;
   available: boolean;
   stock: number;
-}
-interface ExistingImage {
-  url: string;
-  alt: string;
 }
 
 function uid() {
@@ -48,15 +55,23 @@ export function ProductForm({
   const formRef = useRef<HTMLFormElement>(null);
 
   const [colors, setColors] = useState<ColorRow[]>(
-    product?.colors.map((c) => ({ tempId: c.id, name: c.name, hex: c.hex })) ?? []
+    product?.colors.map((c) => ({
+      tempId: c.id,
+      name: c.name,
+      hex: c.hex,
+      existingImages: product.images
+        .filter((i) => i.colorId === c.id)
+        .map((i) => ({ url: i.url, alt: i.alt })),
+      newImages: [],
+    })) ?? []
   );
   const [sizes, setSizes] = useState<SizeRow[]>(
     product?.sizes.map((s) => ({ tempId: s.id, label: s.label })) ?? []
   );
   const [existingImages, setExistingImages] = useState<ExistingImage[]>(
-    product?.images.filter((i) => i.url).map((i) => ({ url: i.url, alt: i.alt })) ?? []
+    product?.images.filter((i) => i.url && !i.colorId).map((i) => ({ url: i.url, alt: i.alt })) ?? []
   );
-  const [newImages, setNewImages] = useState<{ id: string; file: File; preview: string }[]>([]);
+  const [newImages, setNewImages] = useState<NewImage[]>([]);
 
   // Explicit edits to available/stock, keyed by "colorTempId:sizeTempId".
   // Combos without an entry here fall back to the defaults below — this
@@ -98,14 +113,64 @@ export function ProductForm({
     });
   }
 
+  function addColorImages(colorTempId: string, files: File[]) {
+    setColors((prev) =>
+      prev.map((c) =>
+        c.tempId === colorTempId
+          ? {
+              ...c,
+              newImages: [
+                ...c.newImages,
+                ...files.map((file) => ({ id: uid(), file, preview: URL.createObjectURL(file) })),
+              ],
+            }
+          : c
+      )
+    );
+  }
+
+  function removeColorExistingImage(colorTempId: string, url: string) {
+    setColors((prev) =>
+      prev.map((c) =>
+        c.tempId === colorTempId
+          ? { ...c, existingImages: c.existingImages.filter((i) => i.url !== url) }
+          : c
+      )
+    );
+  }
+
+  function removeColorNewImage(colorTempId: string, imageId: string) {
+    setColors((prev) =>
+      prev.map((c) =>
+        c.tempId === colorTempId
+          ? { ...c, newImages: c.newImages.filter((i) => i.id !== imageId) }
+          : c
+      )
+    );
+  }
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    fd.set("colorsJson", JSON.stringify(colors));
+    fd.set("colorsJson", JSON.stringify(colors.map(({ tempId, name, hex }) => ({ tempId, name, hex }))));
     fd.set("sizesJson", JSON.stringify(sizes));
     fd.set("variantsJson", JSON.stringify(variants));
-    fd.set("existingImagesJson", JSON.stringify(existingImages));
-    newImages.forEach(({ file }) => fd.append("newImages", file));
+
+    const allExisting = [
+      ...existingImages.map((img) => ({ ...img, colorTempId: null as string | null })),
+      ...colors.flatMap((c) => c.existingImages.map((img) => ({ ...img, colorTempId: c.tempId }))),
+    ];
+    fd.set("existingImagesJson", JSON.stringify(allExisting));
+
+    const allNew = [
+      ...newImages.map((n) => ({ file: n.file, colorTempId: null as string | null })),
+      ...colors.flatMap((c) => c.newImages.map((n) => ({ file: n.file, colorTempId: c.tempId }))),
+    ];
+    allNew.forEach(({ file, colorTempId }) => {
+      fd.append("newImages", file);
+      fd.append("newImagesColorTempId", colorTempId ?? "");
+    });
+
     startTransition(() => formAction(fd));
   }
 
@@ -195,108 +260,98 @@ export function ProductForm({
 
       {/* images */}
       <section className="border border-border bg-background p-6">
-        <p className="mb-5 text-sm font-medium">Imagens</p>
-        <div className="flex flex-wrap gap-3">
-          {existingImages.map((img) => (
-            <div key={img.url} className="relative h-24 w-20 overflow-hidden bg-muted">
-              <Image src={img.url} alt={img.alt} fill className="object-cover" />
-              <button
-                type="button"
-                onClick={() =>
-                  setExistingImages((prev) => prev.filter((i) => i.url !== img.url))
-                }
-                className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white"
-                aria-label="Remover imagem"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-          ))}
-          {newImages.map((img) => (
-            <div key={img.id} className="relative h-24 w-20 overflow-hidden bg-muted">
-              <Image src={img.preview} alt="" fill className="object-cover" />
-              <button
-                type="button"
-                onClick={() => setNewImages((prev) => prev.filter((i) => i.id !== img.id))}
-                className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white"
-                aria-label="Remover imagem"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-          ))}
-          <label className="flex h-24 w-20 cursor-pointer flex-col items-center justify-center gap-1 border border-dashed border-border text-muted-foreground hover:border-foreground">
-            <Plus className="h-4 w-4" strokeWidth={1.5} />
-            <span className="text-[10px]">Adicionar</span>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                const files = Array.from(e.target.files ?? []);
-                setNewImages((prev) => [
-                  ...prev,
-                  ...files.map((file) => ({
-                    id: uid(),
-                    file,
-                    preview: URL.createObjectURL(file),
-                  })),
-                ]);
-                e.target.value = "";
-              }}
-            />
-          </label>
-        </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          A primeira imagem é usada como capa do produto.
+        <p className="mb-1 text-sm font-medium">
+          {colors.length > 0 ? "Fotos gerais" : "Imagens"}
         </p>
+        <p className="mb-5 text-xs text-muted-foreground">
+          {colors.length > 0
+            ? "Aparecem em todas as cores. Para fotos exclusivas de uma cor (ex: o vestido azul e o vestido vermelho), adicione na seção \"Cores\" abaixo, dentro de cada cor."
+            : "A primeira imagem é usada como capa do produto."}
+        </p>
+        <ImagePicker
+          existing={existingImages}
+          onRemoveExisting={(url) => setExistingImages((prev) => prev.filter((i) => i.url !== url))}
+          newImages={newImages}
+          onAddFiles={(files) =>
+            setNewImages((prev) => [
+              ...prev,
+              ...files.map((file) => ({ id: uid(), file, preview: URL.createObjectURL(file) })),
+            ])
+          }
+          onRemoveNew={(id) => setNewImages((prev) => prev.filter((i) => i.id !== id))}
+        />
       </section>
 
       {/* colors */}
       <section className="border border-border bg-background p-6">
-        <div className="mb-5 flex items-center justify-between">
+        <div className="mb-1 flex items-center justify-between">
           <p className="text-sm font-medium">Cores</p>
           <button
             type="button"
-            onClick={() => setColors((prev) => [...prev, { tempId: uid(), name: "", hex: "#000000" }])}
+            onClick={() =>
+              setColors((prev) => [
+                ...prev,
+                { tempId: uid(), name: "", hex: "#000000", existingImages: [], newImages: [] },
+              ])
+            }
             className="flex items-center gap-1.5 text-xs uppercase tracking-widest-xs text-muted-foreground hover:text-foreground"
           >
             <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
             Adicionar cor
           </button>
         </div>
-        <div className="flex flex-col gap-3">
+        {colors.length > 0 && (
+          <p className="mb-5 text-xs text-muted-foreground">
+            Cada cor pode ter suas próprias fotos — ao clicar na cor, o cliente vê só as fotos daquela cor.
+          </p>
+        )}
+        <div className="flex flex-col gap-4">
           {colors.map((color) => (
-            <div key={color.tempId} className="flex items-center gap-3">
-              <input
-                type="color"
-                value={color.hex}
-                onChange={(e) =>
-                  setColors((prev) =>
-                    prev.map((c) => (c.tempId === color.tempId ? { ...c, hex: e.target.value } : c))
-                  )
-                }
-                className="h-9 w-9 shrink-0 cursor-pointer border border-border"
-              />
-              <input
-                value={color.name}
-                onChange={(e) =>
-                  setColors((prev) =>
-                    prev.map((c) => (c.tempId === color.tempId ? { ...c, name: e.target.value } : c))
-                  )
-                }
-                placeholder="Nome da cor (ex: Preto)"
-                className="flex-1 border border-border bg-background px-3.5 py-2 text-sm outline-none focus:border-foreground"
-              />
-              <button
-                type="button"
-                onClick={() => setColors((prev) => prev.filter((c) => c.tempId !== color.tempId))}
-                aria-label="Remover cor"
-                className="text-muted-foreground hover:text-red-600"
-              >
-                <X className="h-4 w-4" strokeWidth={1.5} />
-              </button>
+            <div key={color.tempId} className="flex flex-col gap-4 border border-border p-4">
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={color.hex}
+                  onChange={(e) =>
+                    setColors((prev) =>
+                      prev.map((c) => (c.tempId === color.tempId ? { ...c, hex: e.target.value } : c))
+                    )
+                  }
+                  className="h-9 w-9 shrink-0 cursor-pointer border border-border"
+                />
+                <input
+                  value={color.name}
+                  onChange={(e) =>
+                    setColors((prev) =>
+                      prev.map((c) => (c.tempId === color.tempId ? { ...c, name: e.target.value } : c))
+                    )
+                  }
+                  placeholder="Nome da cor (ex: Preto)"
+                  className="flex-1 border border-border bg-background px-3.5 py-2 text-sm outline-none focus:border-foreground"
+                />
+                <button
+                  type="button"
+                  onClick={() => setColors((prev) => prev.filter((c) => c.tempId !== color.tempId))}
+                  aria-label="Remover cor"
+                  className="text-muted-foreground hover:text-red-600"
+                >
+                  <X className="h-4 w-4" strokeWidth={1.5} />
+                </button>
+              </div>
+
+              <div>
+                <p className="mb-2 text-xs uppercase tracking-widest-xs text-muted-foreground">
+                  Fotos desta cor (opcional)
+                </p>
+                <ImagePicker
+                  compact
+                  existing={color.existingImages}
+                  onRemoveExisting={(url) => removeColorExistingImage(color.tempId, url)}
+                  newImages={color.newImages}
+                  onAddFiles={(files) => addColorImages(color.tempId, files)}
+                  onRemoveNew={(id) => removeColorNewImage(color.tempId, id)}
+                />
+              </div>
             </div>
           ))}
           {colors.length === 0 && (
@@ -445,6 +500,74 @@ export function ProductForm({
         </button>
       </div>
     </form>
+  );
+}
+
+function ImagePicker({
+  existing,
+  onRemoveExisting,
+  newImages,
+  onAddFiles,
+  onRemoveNew,
+  compact = false,
+}: {
+  existing: ExistingImage[];
+  onRemoveExisting: (url: string) => void;
+  newImages: NewImage[];
+  onAddFiles: (files: File[]) => void;
+  onRemoveNew: (id: string) => void;
+  compact?: boolean;
+}) {
+  const thumbSize = compact ? "h-16 w-14" : "h-24 w-20";
+  return (
+    <div className="flex flex-wrap gap-3">
+      {existing.map((img) => (
+        <div key={img.url} className={cn("relative overflow-hidden bg-muted", thumbSize)}>
+          <Image src={img.url} alt={img.alt} fill className="object-cover" />
+          <button
+            type="button"
+            onClick={() => onRemoveExisting(img.url)}
+            className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white"
+            aria-label="Remover imagem"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      ))}
+      {newImages.map((img) => (
+        <div key={img.id} className={cn("relative overflow-hidden bg-muted", thumbSize)}>
+          <Image src={img.preview} alt="" fill className="object-cover" />
+          <button
+            type="button"
+            onClick={() => onRemoveNew(img.id)}
+            className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white"
+            aria-label="Remover imagem"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      ))}
+      <label
+        className={cn(
+          "flex cursor-pointer flex-col items-center justify-center gap-1 border border-dashed border-border text-muted-foreground hover:border-foreground",
+          thumbSize
+        )}
+      >
+        <Plus className="h-4 w-4" strokeWidth={1.5} />
+        <span className="text-[10px]">Adicionar</span>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            const files = Array.from(e.target.files ?? []);
+            onAddFiles(files);
+            e.target.value = "";
+          }}
+        />
+      </label>
+    </div>
   );
 }
 

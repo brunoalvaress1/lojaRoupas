@@ -21,7 +21,7 @@ interface ProductRow {
   active: boolean;
   created_at: string;
   categories: { slug: string } | null;
-  product_images: { url: string; alt: string | null; position: number }[];
+  product_images: { url: string; alt: string | null; position: number; color_id: string | null }[];
   product_colors: { id: string; name: string; hex: string; position: number }[];
   product_sizes: { id: string; label: string; position: number }[];
   product_variants: {
@@ -35,7 +35,7 @@ interface ProductRow {
 function mapProduct(row: ProductRow): Product {
   const images = [...row.product_images]
     .sort((a, b) => a.position - b.position)
-    .map((i) => ({ url: i.url, alt: i.alt ?? row.name }));
+    .map((i) => ({ url: i.url, alt: i.alt ?? row.name, colorId: i.color_id }));
   const colors = [...row.product_colors]
     .sort((a, b) => a.position - b.position)
     .map((c) => ({ id: c.id, name: c.name, hex: c.hex }));

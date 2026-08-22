@@ -86,6 +86,7 @@ export interface Database {
           url: string;
           alt: string | null;
           position: number;
+          color_id: string | null;
         };
         Insert: {
           id?: string;
@@ -93,6 +94,7 @@ export interface Database {
           url: string;
           alt?: string | null;
           position?: number;
+          color_id?: string | null;
         };
         Update: Partial<
           Database["public"]["Tables"]["product_images"]["Insert"]
@@ -102,6 +104,13 @@ export interface Database {
             foreignKeyName: "product_images_product_id_fkey";
             columns: ["product_id"];
             referencedRelation: "products";
+            referencedColumns: ["id"];
+            isOneToOne: false;
+          },
+          {
+            foreignKeyName: "product_images_color_id_fkey";
+            columns: ["color_id"];
+            referencedRelation: "product_colors";
             referencedColumns: ["id"];
             isOneToOne: false;
           },
