@@ -14,13 +14,10 @@ export function Header() {
   const { settings } = useAppData();
 
   return (
-    <header className="sticky top-0 z-40 hidden w-full border-b border-border bg-background/90 backdrop-blur md:block">
+    <header className="sticky top-0 z-40 hidden w-full border-b border-white/10 bg-black text-white md:block">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-8">
         <Link href="/" className="flex items-center gap-3">
-          <Logo height={44} />
-          <span className="font-display text-xl tracking-widest-xs">
-            {settings.name}
-          </span>
+          <Logo variant="black-bg" height={56} />
         </Link>
 
         <nav className="flex items-center gap-9">
@@ -28,7 +25,7 @@ export function Header() {
             <Link
               key={link.label}
               href={link.href}
-              className="text-[13px] font-medium uppercase tracking-widest-xs text-foreground/80 transition-colors hover:text-foreground"
+              className="font-display text-sm uppercase tracking-wide text-zinc-300 transition-colors hover:text-white"
             >
               {link.label}
             </Link>

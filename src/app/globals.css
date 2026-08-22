@@ -56,6 +56,10 @@ body {
     animation: ken-burns 20s ease-in-out infinite alternate;
   }
 
+  .animate-hero-slide-zoom {
+    animation: hero-slide-zoom 9s ease-out forwards;
+  }
+
   .animate-float {
     animation: float 5s ease-in-out infinite;
   }
@@ -82,6 +86,15 @@ body {
   }
   to {
     transform: scale(1.08);
+  }
+}
+
+@keyframes hero-slide-zoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.09);
   }
 }
 

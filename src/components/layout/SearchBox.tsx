@@ -22,14 +22,14 @@ export function SearchBox({ className }: { className?: string }) {
       {open ? (
         <form
           onSubmit={handleSubmit}
-          className="flex items-center gap-2 border-b border-foreground/40"
+          className="flex items-center gap-2 border-b border-white/40"
         >
           <input
             autoFocus
             value={term}
             onChange={(e) => setTerm(e.target.value)}
             placeholder="Buscar peças..."
-            className="w-40 bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground sm:w-56"
+            className="w-40 bg-transparent py-1 text-sm text-white outline-none placeholder:text-white/50 sm:w-56"
           />
           <button
             type="button"

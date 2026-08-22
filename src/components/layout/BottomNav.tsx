@@ -19,7 +19,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-center justify-around border-t border-border bg-background/95 backdrop-blur md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-center justify-around border-t border-white/10 bg-black md:hidden">
       {BOTTOM_NAV_LINKS.map((link) => {
         const Icon = ICONS[link.icon];
         const active = pathname === link.href;
@@ -29,7 +29,7 @@ export function BottomNav() {
             href={link.href}
             className={cn(
               "relative flex flex-col items-center gap-1 px-2 text-[10px] uppercase tracking-widest-xs",
-              active ? "text-foreground" : "text-muted-foreground"
+              active ? "text-zinc-100" : "text-white/60"
             )}
           >
             <Icon

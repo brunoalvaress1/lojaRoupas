@@ -3,16 +3,62 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
-import { motion, useScroll, useTransform } from "motion/react";
-import { useRef } from "react";
+import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 import { useAppData } from "@/context/AppDataContext";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
+const HERO_IMAGES = [
+  "/dentroloja1.jpeg",
+  "/dentroloja2.jpeg",
+  "/dentroloja3.jpeg",
+  "/foraDaLoja.jpeg",
+];
+
+/** Varies the Ken Burns focal point per slide so the zoom never repeats identically. */
+const ZOOM_ORIGINS = ["center", "25% 35%", "75% 60%", "35% 75%"];
+
+const SLIDE_DURATION_MS = 6800;
+const TRANSITION_DURATION_S = 1.9;
+
+function HeroSlideshow({ name }: { name: string }) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setIndex((i) => (i + 1) % HERO_IMAGES.length);
+    }, SLIDE_DURATION_MS);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        key={index}
+        initial={{ opacity: 0, scale: 1.04, filter: "blur(10px)" }}
+        animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+        exit={{ opacity: 0, scale: 0.97, filter: "blur(6px)" }}
+        transition={{ duration: TRANSITION_DURATION_S, ease: EASE }}
+        className="absolute inset-0"
+      >
+        <Image
+          src={HERO_IMAGES[index]}
+          alt={`Loja ${name}`}
+          fill
+          priority={index === 0}
+          sizes="100vw"
+          style={{ transformOrigin: ZOOM_ORIGINS[index % ZOOM_ORIGINS.length] }}
+          className="animate-hero-slide-zoom object-cover"
+        />
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 export function HeroVideo() {
   const { settings } = useAppData();
-  const { heroVideoUrl, heroFallbackImage, heroTitle, heroSubtitle, heroButtonLabel, name } =
-    settings;
+  const { heroTitle, heroSubtitle, heroButtonLabel, name } = settings;
 
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
@@ -30,27 +76,7 @@ export function HeroVideo() {
       className="relative flex h-[92svh] min-h-[560px] w-full items-end overflow-hidden bg-black text-white"
     >
       <motion.div style={{ y: bgY }} className="absolute inset-0 h-[120%]">
-        {heroVideoUrl ? (
-          <video
-            className="h-full w-full object-cover"
-            autoPlay
-            muted
-            loop
-            playsInline
-            poster={heroFallbackImage}
-          >
-            <source src={heroVideoUrl} type="video/mp4" />
-          </video>
-        ) : (
-          <Image
-            src={heroFallbackImage}
-            alt={`Interior da loja ${name}`}
-            fill
-            priority
-            sizes="100vw"
-            className="animate-ken-burns object-cover"
-          />
-        )}
+        <HeroSlideshow name={name} />
       </motion.div>
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/40" />

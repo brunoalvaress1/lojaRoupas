@@ -18,7 +18,7 @@ export function MobileHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-white/10 bg-black px-4 text-white md:hidden">
         <button
           type="button"
           aria-label="Abrir menu"
@@ -28,7 +28,7 @@ export function MobileHeader() {
         </button>
 
         <Link href="/">
-          <Logo height={32} />
+          <Logo variant="black-bg" height={40} />
         </Link>
 
         <Link href="/carrinho" aria-label="Carrinho" className="relative">
@@ -44,9 +44,9 @@ export function MobileHeader() {
             className="absolute inset-0 bg-black/50"
             onClick={() => setOpen(false)}
           />
-          <div className="animate-fade-in absolute inset-y-0 left-0 flex w-[82%] max-w-sm flex-col overflow-y-auto bg-background px-6 py-6">
+          <div className="animate-fade-in absolute inset-y-0 left-0 flex w-[82%] max-w-sm flex-col overflow-y-auto bg-black px-6 py-6 text-white">
             <div className="mb-8 flex items-center justify-between">
-              <Logo height={36} />
+              <Logo variant="black-bg" height={44} />
               <span className="sr-only">{storeSettings.name}</span>
               <button aria-label="Fechar" onClick={() => setOpen(false)}>
                 <X className="h-6 w-6" strokeWidth={1.5} />
@@ -59,7 +59,7 @@ export function MobileHeader() {
                   key={link.label}
                   href={link.href}
                   onClick={() => setOpen(false)}
-                  className="text-sm font-medium uppercase tracking-widest-xs"
+                  className="font-display text-base uppercase tracking-wide text-zinc-300"
                 >
                   {link.label}
                 </Link>
@@ -67,7 +67,7 @@ export function MobileHeader() {
             </nav>
 
             <div className="mt-10">
-              <p className="mb-3 text-xs uppercase tracking-widest-xs text-muted-foreground">
+              <p className="mb-3 text-xs uppercase tracking-widest-xs text-white/50">
                 Categorias
               </p>
               <div className="flex flex-col gap-3">
@@ -76,7 +76,7 @@ export function MobileHeader() {
                     key={category.id}
                     href={`/colecao?categoria=${category.slug}`}
                     onClick={() => setOpen(false)}
-                    className="text-sm text-foreground/80"
+                    className="text-sm text-white/80"
                   >
                     {category.name}
                   </Link>
@@ -84,7 +84,7 @@ export function MobileHeader() {
               </div>
             </div>
 
-            <div className="mt-auto flex flex-col gap-3 border-t border-border pt-6">
+            <div className="mt-auto flex flex-col gap-3 border-t border-white/10 pt-6">
               <Link
                 href={currentUser ? "/conta" : "/login"}
                 onClick={() => setOpen(false)}
