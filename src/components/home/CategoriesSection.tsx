@@ -88,13 +88,15 @@ function CategoryRow({
         data-revealed={revealed ? "" : undefined}
         className="group relative flex items-center justify-between overflow-hidden px-6 py-6 sm:px-8 sm:py-9"
       >
-        <Image
-          src={category.image}
-          alt={category.name}
-          fill
-          sizes="100vw"
-          className="object-cover opacity-15 transition-[opacity,transform,filter] duration-500 ease-out group-hover:scale-105 group-hover:opacity-100 group-data-[revealed]:opacity-100 [@media(hover:hover)]:grayscale [@media(hover:hover)]:group-hover:grayscale-0"
-        />
+        {category.image && (
+          <Image
+            src={category.image}
+            alt={category.name}
+            fill
+            sizes="100vw"
+            className="object-cover opacity-15 transition-[opacity,transform,filter] duration-500 ease-out group-hover:scale-105 group-hover:opacity-100 group-data-[revealed]:opacity-100 [@media(hover:hover)]:grayscale [@media(hover:hover)]:group-hover:grayscale-0"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/40 transition-opacity duration-500 group-hover:opacity-0 group-data-[revealed]:opacity-0 sm:via-background/70" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-data-[revealed]:opacity-100" />
 

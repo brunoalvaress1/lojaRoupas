@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { ImageOff } from "lucide-react";
 import { motion } from "motion/react";
 import type { Category } from "@/types";
 
@@ -27,13 +28,19 @@ export function CategoriesGrid({ categories }: { categories: Category[] }) {
             href={`/colecao?categoria=${category.slug}`}
             className="group relative block h-full w-full overflow-hidden bg-muted"
           >
-            <Image
-              src={category.image}
-              alt={category.name}
-              fill
-              sizes="(max-width: 640px) 50vw, 25vw"
-              className="object-cover object-top transition-[transform,filter] duration-700 ease-out group-hover:scale-110 [@media(hover:hover)]:grayscale [@media(hover:hover)]:group-hover:grayscale-0"
-            />
+            {category.image ? (
+              <Image
+                src={category.image}
+                alt={category.name}
+                fill
+                sizes="(max-width: 640px) 50vw, 25vw"
+                className="object-cover object-top transition-[transform,filter] duration-700 ease-out group-hover:scale-110 [@media(hover:hover)]:grayscale [@media(hover:hover)]:group-hover:grayscale-0"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                <ImageOff className="h-6 w-6 text-muted-foreground/40" strokeWidth={1.2} />
+              </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent transition-opacity duration-500 group-hover:from-black/75" />
 
             <span className="absolute left-4 top-4 font-display text-xs text-white/70">

@@ -35,14 +35,15 @@ export async function createCategory(
   const imageFile = formData.get("image") as File | null;
 
   if (!name) return { error: "Informe o nome da categoria." };
+  if (!imageFile || imageFile.size === 0) {
+    return { error: "Selecione uma imagem para a categoria." };
+  }
 
-  let imageUrl: string | null = null;
-  if (imageFile && imageFile.size > 0) {
-    try {
-      imageUrl = await uploadCategoryImage(supabase, imageFile);
-    } catch {
-      return { error: "Não foi possível enviar a imagem." };
-    }
+  let imageUrl: string;
+  try {
+    imageUrl = await uploadCategoryImage(supabase, imageFile);
+  } catch {
+    return { error: "Não foi possível enviar a imagem." };
   }
 
   const { error } = await supabase.from("categories").insert({

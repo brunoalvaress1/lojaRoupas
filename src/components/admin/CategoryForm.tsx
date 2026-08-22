@@ -61,12 +61,18 @@ export function CategoryForm({ category }: { category?: Category }) {
             type="file"
             name="image"
             accept="image/*"
+            required={!category}
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) setPreview(URL.createObjectURL(file));
             }}
             className="text-sm"
           />
+          {!category && (
+            <span className="text-xs text-muted-foreground">
+              Obrigatória — categorias sem imagem aparecem quebradas na loja.
+            </span>
+          )}
           {preview && (
             <div className="relative mt-2 h-32 w-32 overflow-hidden rounded bg-muted">
               <Image src={preview} alt="Pré-visualização" fill className="object-cover" />
