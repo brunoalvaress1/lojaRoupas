@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { createProduct, updateProduct, type ProductFormState } from "@/lib/actions/products";
-import { uploadToStorage } from "@/lib/upload-client";
+import { mapWithConcurrency, uploadToStorage } from "@/lib/upload-client";
 import { cn } from "@/lib/utils";
 import type { Category, Product } from "@/types";
 
@@ -54,6 +54,7 @@ export function ProductForm({
   const [, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const [colors, setColors] = useState<ColorRow[]>(
@@ -153,53 +154,49 @@ export function ProductForm({
     );
   }
 
-  /**
-   * Resolves one image group (existing URLs + freshly picked files) into a
-   * flat list of {url, alt, colorTempId}. Files are uploaded straight from
-   * the browser to Supabase Storage — not sent through the Server Action —
-   * since a real photo easily exceeds the 1MB body limit Next.js enforces
-   * on Server Actions, which used to make saving fail on real (non-test) photos.
-   */
-  async function resolveImageGroup(
-    existing: ExistingImage[],
-    pending: NewImage[],
-    colorTempId: string | null
-  ) {
-    const uploaded = await Promise.all(
-      pending.map(async (n) => ({
-        url: await uploadToStorage("product-images", "products", n.file),
-        alt: "",
-        colorTempId,
-      }))
-    );
-    return [...existing.map((img) => ({ ...img, colorTempId })), ...uploaded];
-  }
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formEl = e.currentTarget;
     setUploadError(null);
-    setUploading(true);
 
-    let allImages;
-    try {
-      const groups = await Promise.all([
-        resolveImageGroup(existingImages, newImages, null),
-        ...colors.map((c) => resolveImageGroup(c.existingImages, c.newImages, c.tempId)),
-      ]);
-      allImages = groups.flat();
-    } catch {
+    const alreadyUploaded = [
+      ...existingImages.map((img) => ({ ...img, colorTempId: null as string | null })),
+      ...colors.flatMap((c) => c.existingImages.map((img) => ({ ...img, colorTempId: c.tempId }))),
+    ];
+    const pending = [
+      ...newImages.map((n) => ({ file: n.file, colorTempId: null as string | null })),
+      ...colors.flatMap((c) => c.newImages.map((n) => ({ file: n.file, colorTempId: c.tempId }))),
+    ];
+
+    let uploaded: { url: string; alt: string; colorTempId: string | null }[] = [];
+    if (pending.length > 0) {
+      // Uploading every photo at once is what makes saving unreliable when a
+      // product has many colors/photos — a weak connection can't sustain that
+      // many simultaneous transfers, and it looks frozen with no feedback.
+      // A small pool + a visible counter fixes both.
+      setUploadProgress({ done: 0, total: pending.length });
+      setUploading(true);
+      try {
+        uploaded = await mapWithConcurrency(pending, 3, async ({ file, colorTempId }) => {
+          const url = await uploadToStorage("product-images", "products", file);
+          setUploadProgress((p) => ({ ...p, done: p.done + 1 }));
+          return { url, alt: "", colorTempId };
+        });
+      } catch {
+        setUploading(false);
+        setUploadError(
+          "Não foi possível enviar uma ou mais fotos. Verifique sua conexão e tente novamente — as fotos já enviadas não precisam ser adicionadas de novo."
+        );
+        return;
+      }
       setUploading(false);
-      setUploadError("Não foi possível enviar uma ou mais fotos. Verifique sua conexão e tente novamente.");
-      return;
     }
-    setUploading(false);
 
     const fd = new FormData(formEl);
     fd.set("colorsJson", JSON.stringify(colors.map(({ tempId, name, hex }) => ({ tempId, name, hex }))));
     fd.set("sizesJson", JSON.stringify(sizes));
     fd.set("variantsJson", JSON.stringify(variants));
-    fd.set("imagesJson", JSON.stringify(allImages));
+    fd.set("imagesJson", JSON.stringify([...alreadyUploaded, ...uploaded]));
 
     startTransition(() => formAction(fd));
   }
@@ -535,7 +532,7 @@ export function ProductForm({
           className="bg-accent px-6 py-3 text-xs font-medium uppercase tracking-widest-xs text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
         >
           {uploading
-            ? "Enviando fotos..."
+            ? `Enviando fotos... (${uploadProgress.done}/${uploadProgress.total})`
             : pending
               ? "Salvando..."
               : product

@@ -58,12 +58,22 @@ export async function uploadToStorage(
   const supabase = createClient();
   const upload = await compressImage(file);
   const ext = upload.type === "image/jpeg" ? "jpg" : upload.name.split(".").pop() ?? "jpg";
-  const path = `${pathPrefix}/${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage
-    .from(bucket)
-    .upload(path, upload, { contentType: upload.type });
-  if (error) throw error;
-  return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+
+  // A weak connection can drop a single request without the whole batch
+  // being unreasonable — retry a couple of times before giving up on it.
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const path = `${pathPrefix}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from(bucket)
+      .upload(path, upload, { contentType: upload.type });
+    if (!error) {
+      return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+    }
+    lastError = error;
+    if (attempt < 2) await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
+  }
+  throw lastError;
 }
 
 /**

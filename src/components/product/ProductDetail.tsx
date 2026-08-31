@@ -36,11 +36,15 @@ export function ProductDetail({
   const canAdd = sizeId !== null && isVariantAvailable(product, colorId, sizeId);
   const activePrice = product.promoPrice ?? product.price;
 
+  // Photos for the selected color come first — otherwise, whenever a product
+  // has several shared "general" photos, the gallery's default image never
+  // visibly changes when switching color, since it always opens on whatever
+  // is first in the array. General photos still show, just after.
   const galleryImages = useMemo(() => {
-    const forColor = product.images.filter(
-      (img) => !img.colorId || img.colorId === colorId
-    );
-    return forColor.length > 0 ? forColor : product.images;
+    const colorSpecific = product.images.filter((img) => img.colorId === colorId);
+    const general = product.images.filter((img) => !img.colorId);
+    const combined = [...colorSpecific, ...general];
+    return combined.length > 0 ? combined : product.images;
   }, [product.images, colorId]);
 
   function handleAddToCart() {
