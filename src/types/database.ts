@@ -169,7 +169,7 @@ export interface Database {
         Row: {
           id: string;
           product_id: string;
-          color_id: string;
+          color_id: string | null;
           size_id: string;
           available: boolean;
           stock: number;
@@ -177,7 +177,7 @@ export interface Database {
         Insert: {
           id?: string;
           product_id: string;
-          color_id: string;
+          color_id?: string | null;
           size_id: string;
           available?: boolean;
           stock?: number;

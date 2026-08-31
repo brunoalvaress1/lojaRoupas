@@ -11,20 +11,6 @@ export interface SettingsFormState {
   success?: boolean;
 }
 
-async function uploadSiteMedia(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  file: File,
-  prefix: string
-) {
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const path = `${prefix}-${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage
-    .from("site-media")
-    .upload(path, file, { contentType: file.type, upsert: true });
-  if (error) throw error;
-  return supabase.storage.from("site-media").getPublicUrl(path).data.publicUrl;
-}
-
 export async function updateSiteSettings(
   _prev: SettingsFormState,
   formData: FormData
@@ -60,23 +46,11 @@ export async function updateSiteSettings(
     updated_at: new Date().toISOString(),
   };
 
-  const videoFile = formData.get("heroVideo") as File | null;
-  if (videoFile && videoFile.size > 0) {
-    try {
-      update.hero_video_url = await uploadSiteMedia(supabase, videoFile, "hero-video");
-    } catch {
-      return { error: "Não foi possível enviar o vídeo do hero." };
-    }
-  }
+  const heroVideoUrl = String(formData.get("heroVideoUrl") ?? "").trim();
+  if (heroVideoUrl) update.hero_video_url = heroVideoUrl;
 
-  const posterFile = formData.get("heroPoster") as File | null;
-  if (posterFile && posterFile.size > 0) {
-    try {
-      update.hero_fallback_image = await uploadSiteMedia(supabase, posterFile, "hero-poster");
-    } catch {
-      return { error: "Não foi possível enviar a imagem de capa." };
-    }
-  }
+  const heroPosterUrl = String(formData.get("heroPosterUrl") ?? "").trim();
+  if (heroPosterUrl) update.hero_fallback_image = heroPosterUrl;
 
   const { error } = await supabase.from("site_settings").update(update).eq("id", 1);
   if (error) return { error: error.message };

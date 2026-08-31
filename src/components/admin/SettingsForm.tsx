@@ -1,16 +1,49 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { updateSiteSettings, type SettingsFormState } from "@/lib/actions/settings";
+import { uploadToStorage } from "@/lib/upload-client";
 import type { StoreSettings } from "@/types";
 
 const initialState: SettingsFormState = {};
 
 export function SettingsForm({ settings }: { settings: StoreSettings }) {
   const [state, formAction, pending] = useActionState(updateSiteSettings, initialState);
+  const [, startTransition] = useTransition();
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const videoFile = fd.get("heroVideo") as File | null;
+    const posterFile = fd.get("heroPoster") as File | null;
+    fd.delete("heroVideo");
+    fd.delete("heroPoster");
+
+    if ((videoFile && videoFile.size > 0) || (posterFile && posterFile.size > 0)) {
+      setUploadError(null);
+      setUploading(true);
+      try {
+        if (videoFile && videoFile.size > 0) {
+          fd.set("heroVideoUrl", await uploadToStorage("site-media", "hero-video", videoFile));
+        }
+        if (posterFile && posterFile.size > 0) {
+          fd.set("heroPosterUrl", await uploadToStorage("site-media", "hero-poster", posterFile));
+        }
+      } catch {
+        setUploading(false);
+        setUploadError("Não foi possível enviar o arquivo. Verifique sua conexão e tente novamente.");
+        return;
+      }
+      setUploading(false);
+    }
+
+    startTransition(() => formAction(fd));
+  }
 
   return (
-    <form action={formAction} className="flex max-w-2xl flex-col gap-8">
+    <form onSubmit={handleSubmit} className="flex max-w-2xl flex-col gap-8">
       <section className="border border-border bg-background p-6">
         <p className="mb-5 text-sm font-medium">Loja</p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -68,6 +101,7 @@ export function SettingsForm({ settings }: { settings: StoreSettings }) {
         </div>
       </section>
 
+      {uploadError && <p className="text-sm text-red-600">{uploadError}</p>}
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
       {state.success && (
         <p className="text-sm text-green-700">Configurações salvas com sucesso.</p>
@@ -75,10 +109,10 @@ export function SettingsForm({ settings }: { settings: StoreSettings }) {
 
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || uploading}
         className="w-fit bg-accent px-6 py-3 text-xs font-medium uppercase tracking-widest-xs text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
       >
-        {pending ? "Salvando..." : "Salvar configurações"}
+        {uploading ? "Enviando arquivo..." : pending ? "Salvando..." : "Salvar configurações"}
       </button>
     </form>
   );

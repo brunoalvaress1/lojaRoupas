@@ -5,19 +5,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/slugify";
 
-async function uploadCategoryImage(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  file: File
-) {
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const path = `categories/${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage
-    .from("product-images")
-    .upload(path, file, { contentType: file.type });
-  if (error) throw error;
-  return supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
-}
-
 export interface CategoryFormState {
   error?: string;
 }
@@ -32,19 +19,10 @@ export async function createCategory(
   const slugInput = String(formData.get("slug") ?? "").trim();
   const order = Number(formData.get("order") ?? 0);
   const active = formData.get("active") === "on";
-  const imageFile = formData.get("image") as File | null;
+  const imageUrl = String(formData.get("imageUrl") ?? "").trim();
 
   if (!name) return { error: "Informe o nome da categoria." };
-  if (!imageFile || imageFile.size === 0) {
-    return { error: "Selecione uma imagem para a categoria." };
-  }
-
-  let imageUrl: string;
-  try {
-    imageUrl = await uploadCategoryImage(supabase, imageFile);
-  } catch {
-    return { error: "Não foi possível enviar a imagem." };
-  }
+  if (!imageUrl) return { error: "Selecione uma imagem para a categoria." };
 
   const { error } = await supabase.from("categories").insert({
     name,
@@ -77,18 +55,9 @@ export async function updateCategory(
   const slugInput = String(formData.get("slug") ?? "").trim();
   const order = Number(formData.get("order") ?? 0);
   const active = formData.get("active") === "on";
-  const imageFile = formData.get("image") as File | null;
+  const imageUrl = String(formData.get("imageUrl") ?? "").trim();
 
   if (!name) return { error: "Informe o nome da categoria." };
-
-  let imageUrl: string | undefined;
-  if (imageFile && imageFile.size > 0) {
-    try {
-      imageUrl = await uploadCategoryImage(supabase, imageFile);
-    } catch {
-      return { error: "Não foi possível enviar a imagem." };
-    }
-  }
 
   const { error } = await supabase
     .from("categories")

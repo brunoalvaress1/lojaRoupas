@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { createProduct, updateProduct, type ProductFormState } from "@/lib/actions/products";
+import { uploadToStorage } from "@/lib/upload-client";
 import { cn } from "@/lib/utils";
 import type { Category, Product } from "@/types";
 
@@ -31,10 +32,9 @@ interface SizeRow {
   label: string;
 }
 interface VariantCell {
-  colorTempId: string;
+  colorTempId: string | null;
   sizeTempId: string;
   available: boolean;
-  stock: number;
 }
 
 function uid() {
@@ -53,6 +53,8 @@ export function ProductForm({
   const [state, formAction, pending] = useActionState(action, initialState);
   const [, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const [colors, setColors] = useState<ColorRow[]>(
     product?.colors.map((c) => ({
@@ -73,42 +75,44 @@ export function ProductForm({
   );
   const [newImages, setNewImages] = useState<NewImage[]>([]);
 
-  // Explicit edits to available/stock, keyed by "colorTempId:sizeTempId".
-  // Combos without an entry here fall back to the defaults below — this
-  // keeps the grid in sync with colors/sizes without an effect.
-  const [variantOverrides, setVariantOverrides] = useState<Map<string, { available: boolean; stock: number }>>(
-    () =>
-      new Map(
-        (product?.variants ?? []).map((v) => [
-          `${v.colorId}:${v.sizeId}`,
-          { available: v.available, stock: v.stock },
-        ])
-      )
+  // Explicit "esgotado" edits, keyed by "colorTempId:sizeTempId". Combos
+  // without an entry here fall back to available=true — this keeps the
+  // grid in sync with colors/sizes without an effect.
+  const [variantOverrides, setVariantOverrides] = useState<Map<string, boolean>>(
+    () => new Map((product?.variants ?? []).map((v) => [`${v.colorId ?? "null"}:${v.sizeId}`, v.available]))
   );
 
   const variants = useMemo<VariantCell[]>(() => {
     const cells: VariantCell[] = [];
+    if (colors.length === 0) {
+      for (const size of sizes) {
+        cells.push({
+          colorTempId: null,
+          sizeTempId: size.tempId,
+          available: variantOverrides.get(`null:${size.tempId}`) ?? true,
+        });
+      }
+      return cells;
+    }
     for (const color of colors) {
       for (const size of sizes) {
         const key = `${color.tempId}:${size.tempId}`;
-        const override = variantOverrides.get(key);
         cells.push({
           colorTempId: color.tempId,
           sizeTempId: size.tempId,
-          available: override?.available ?? true,
-          stock: override?.stock ?? 10,
+          available: variantOverrides.get(key) ?? true,
         });
       }
     }
     return cells;
   }, [colors, sizes, variantOverrides]);
 
-  function updateVariant(colorTempId: string, sizeTempId: string, patch: Partial<{ available: boolean; stock: number }>) {
+  function toggleVariantAvailable(colorTempId: string | null, sizeTempId: string) {
     const key = `${colorTempId}:${sizeTempId}`;
     setVariantOverrides((prev) => {
       const next = new Map(prev);
-      const current = next.get(key) ?? { available: true, stock: 10 };
-      next.set(key, { ...current, ...patch });
+      const current = variants.find((v) => v.colorTempId === colorTempId && v.sizeTempId === sizeTempId);
+      next.set(key, !(current?.available ?? true));
       return next;
     });
   }
@@ -149,27 +153,53 @@ export function ProductForm({
     );
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  /**
+   * Resolves one image group (existing URLs + freshly picked files) into a
+   * flat list of {url, alt, colorTempId}. Files are uploaded straight from
+   * the browser to Supabase Storage — not sent through the Server Action —
+   * since a real photo easily exceeds the 1MB body limit Next.js enforces
+   * on Server Actions, which used to make saving fail on real (non-test) photos.
+   */
+  async function resolveImageGroup(
+    existing: ExistingImage[],
+    pending: NewImage[],
+    colorTempId: string | null
+  ) {
+    const uploaded = await Promise.all(
+      pending.map(async (n) => ({
+        url: await uploadToStorage("product-images", "products", n.file),
+        alt: "",
+        colorTempId,
+      }))
+    );
+    return [...existing.map((img) => ({ ...img, colorTempId })), ...uploaded];
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
+    const formEl = e.currentTarget;
+    setUploadError(null);
+    setUploading(true);
+
+    let allImages;
+    try {
+      const groups = await Promise.all([
+        resolveImageGroup(existingImages, newImages, null),
+        ...colors.map((c) => resolveImageGroup(c.existingImages, c.newImages, c.tempId)),
+      ]);
+      allImages = groups.flat();
+    } catch {
+      setUploading(false);
+      setUploadError("Não foi possível enviar uma ou mais fotos. Verifique sua conexão e tente novamente.");
+      return;
+    }
+    setUploading(false);
+
+    const fd = new FormData(formEl);
     fd.set("colorsJson", JSON.stringify(colors.map(({ tempId, name, hex }) => ({ tempId, name, hex }))));
     fd.set("sizesJson", JSON.stringify(sizes));
     fd.set("variantsJson", JSON.stringify(variants));
-
-    const allExisting = [
-      ...existingImages.map((img) => ({ ...img, colorTempId: null as string | null })),
-      ...colors.flatMap((c) => c.existingImages.map((img) => ({ ...img, colorTempId: c.tempId }))),
-    ];
-    fd.set("existingImagesJson", JSON.stringify(allExisting));
-
-    const allNew = [
-      ...newImages.map((n) => ({ file: n.file, colorTempId: null as string | null })),
-      ...colors.flatMap((c) => c.newImages.map((n) => ({ file: n.file, colorTempId: c.tempId }))),
-    ];
-    allNew.forEach(({ file, colorTempId }) => {
-      fd.append("newImages", file);
-      fd.append("newImagesColorTempId", colorTempId ?? "");
-    });
+    fd.set("imagesJson", JSON.stringify(allImages));
 
     startTransition(() => formAction(fd));
   }
@@ -265,8 +295,8 @@ export function ProductForm({
         </p>
         <p className="mb-5 text-xs text-muted-foreground">
           {colors.length > 0
-            ? "Aparecem em todas as cores. Para fotos exclusivas de uma cor (ex: o vestido azul e o vestido vermelho), adicione na seção \"Cores\" abaixo, dentro de cada cor."
-            : "A primeira imagem é usada como capa do produto."}
+            ? "Coloque aqui só a foto de capa, a foto do efeito ao passar o mouse e, se quiser, mais um ângulo — o resto (a peça em cada cor) vai na seção \"Cores\" abaixo, dentro de cada cor."
+            : "A 1ª foto é a capa do produto; a 2ª é a que aparece ao passar o mouse."}
         </p>
         <ImagePicker
           existing={existingImages}
@@ -279,6 +309,7 @@ export function ProductForm({
             ])
           }
           onRemoveNew={(id) => setNewImages((prev) => prev.filter((i) => i.id !== id))}
+          slotLabels={["Capa", "Hover"]}
         />
       </section>
 
@@ -403,93 +434,113 @@ export function ProductForm({
       </section>
 
       {/* variants */}
-      {colors.length > 0 && sizes.length > 0 && (
+      {sizes.length > 0 && (
         <section className="border border-border bg-background p-6">
-          <p className="mb-1 text-sm font-medium">Disponibilidade por variação</p>
+          <p className="mb-1 text-sm font-medium">Disponibilidade</p>
           <p className="mb-5 text-xs text-muted-foreground">
-            Desmarque as combinações esgotadas e ajuste o estoque de cada uma.
+            {colors.length > 0
+              ? "Clique para marcar uma combinação de cor e tamanho como esgotada."
+              : "Clique para marcar um tamanho como esgotado."}
           </p>
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-sm">
-              <thead>
-                <tr>
-                  <th className="p-2 text-left text-xs uppercase tracking-widest-xs text-muted-foreground">
-                    Cor \ Tamanho
-                  </th>
-                  {sizes.map((size) => (
-                    <th
-                      key={size.tempId}
-                      className="p-2 text-center text-xs uppercase tracking-widest-xs text-muted-foreground"
-                    >
-                      {size.label || "—"}
+          {colors.length === 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {sizes.map((size) => {
+                const variant = variants.find((v) => v.sizeTempId === size.tempId);
+                const available = variant?.available ?? true;
+                return (
+                  <button
+                    key={size.tempId}
+                    type="button"
+                    onClick={() => toggleVariantAvailable(null, size.tempId)}
+                    className={cn(
+                      "border px-4 py-2 text-xs uppercase tracking-widest-xs transition-colors",
+                      available
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border text-muted-foreground line-through"
+                    )}
+                  >
+                    {size.label || "—"} · {available ? "Disponível" : "Esgotado"}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full border-collapse text-sm">
+                <thead>
+                  <tr>
+                    <th className="p-2 text-left text-xs uppercase tracking-widest-xs text-muted-foreground">
+                      Cor \ Tamanho
                     </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {colors.map((color) => (
-                  <tr key={color.tempId} className="border-t border-border">
-                    <td className="p-2 text-sm">
-                      <span className="flex items-center gap-2">
-                        <span
-                          className="h-3.5 w-3.5 shrink-0 rounded-full border border-border"
-                          style={{ backgroundColor: color.hex }}
-                        />
-                        {color.name || "—"}
-                      </span>
-                    </td>
-                    {sizes.map((size) => {
-                      const variant = variants.find(
-                        (v) => v.colorTempId === color.tempId && v.sizeTempId === size.tempId
-                      );
-                      return (
-                        <td key={size.tempId} className="p-2 text-center">
-                          <div className="flex flex-col items-center gap-1">
-                            <input
-                              type="checkbox"
-                              checked={variant?.available ?? true}
-                              onChange={(e) =>
-                                updateVariant(color.tempId, size.tempId, {
-                                  available: e.target.checked,
-                                })
-                              }
-                              className="h-4 w-4"
-                            />
-                            <input
-                              type="number"
-                              min={0}
-                              value={variant?.stock ?? 0}
-                              onChange={(e) =>
-                                updateVariant(color.tempId, size.tempId, {
-                                  stock: Number(e.target.value),
-                                })
-                              }
-                              className={cn(
-                                "w-14 border border-border bg-background px-1.5 py-1 text-center text-xs outline-none focus:border-foreground",
-                                !variant?.available && "opacity-40"
-                              )}
-                            />
-                          </div>
-                        </td>
-                      );
-                    })}
+                    {sizes.map((size) => (
+                      <th
+                        key={size.tempId}
+                        className="p-2 text-center text-xs uppercase tracking-widest-xs text-muted-foreground"
+                      >
+                        {size.label || "—"}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {colors.map((color) => (
+                    <tr key={color.tempId} className="border-t border-border">
+                      <td className="p-2 text-sm">
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="h-3.5 w-3.5 shrink-0 rounded-full border border-border"
+                            style={{ backgroundColor: color.hex }}
+                          />
+                          {color.name || "—"}
+                        </span>
+                      </td>
+                      {sizes.map((size) => {
+                        const variant = variants.find(
+                          (v) => v.colorTempId === color.tempId && v.sizeTempId === size.tempId
+                        );
+                        const available = variant?.available ?? true;
+                        return (
+                          <td key={size.tempId} className="p-2 text-center">
+                            <button
+                              type="button"
+                              onClick={() => toggleVariantAvailable(color.tempId, size.tempId)}
+                              className={cn(
+                                "w-24 border px-2 py-1.5 text-[11px] uppercase tracking-widest-xs transition-colors",
+                                available
+                                  ? "border-foreground bg-foreground text-background"
+                                  : "border-border text-muted-foreground line-through"
+                              )}
+                            >
+                              {available ? "Disponível" : "Esgotado"}
+                            </button>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       )}
 
+      {uploadError && <p className="text-sm text-red-600">{uploadError}</p>}
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
 
       <div className="flex items-center gap-3">
         <button
           type="submit"
-          disabled={pending}
+          disabled={pending || uploading}
           className="bg-accent px-6 py-3 text-xs font-medium uppercase tracking-widest-xs text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
         >
-          {pending ? "Salvando..." : product ? "Salvar alterações" : "Criar produto"}
+          {uploading
+            ? "Enviando fotos..."
+            : pending
+              ? "Salvando..."
+              : product
+                ? "Salvar alterações"
+                : "Criar produto"}
         </button>
         <button
           type="button"
@@ -510,6 +561,7 @@ function ImagePicker({
   onAddFiles,
   onRemoveNew,
   compact = false,
+  slotLabels,
 }: {
   existing: ExistingImage[];
   onRemoveExisting: (url: string) => void;
@@ -517,36 +569,50 @@ function ImagePicker({
   onAddFiles: (files: File[]) => void;
   onRemoveNew: (id: string) => void;
   compact?: boolean;
+  /** Optional caption per photo position (0-indexed, existing photos first, then new ones). */
+  slotLabels?: string[];
 }) {
   const thumbSize = compact ? "h-16 w-14" : "h-24 w-20";
   return (
     <div className="flex flex-wrap gap-3">
-      {existing.map((img) => (
-        <div key={img.url} className={cn("relative overflow-hidden bg-muted", thumbSize)}>
-          <Image src={img.url} alt={img.alt} fill className="object-cover" />
-          <button
-            type="button"
-            onClick={() => onRemoveExisting(img.url)}
-            className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white"
-            aria-label="Remover imagem"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      ))}
-      {newImages.map((img) => (
-        <div key={img.id} className={cn("relative overflow-hidden bg-muted", thumbSize)}>
-          <Image src={img.preview} alt="" fill className="object-cover" />
-          <button
-            type="button"
-            onClick={() => onRemoveNew(img.id)}
-            className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white"
-            aria-label="Remover imagem"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      ))}
+      {existing.map((img, i) => {
+        const label = slotLabels?.[i];
+        return (
+          <div key={img.url} className="flex flex-col items-center gap-1">
+            <div className={cn("relative overflow-hidden bg-muted", thumbSize)}>
+              <Image src={img.url} alt={img.alt} fill className="object-cover" />
+              <button
+                type="button"
+                onClick={() => onRemoveExisting(img.url)}
+                className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white"
+                aria-label="Remover imagem"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+            {label && <span className="text-[10px] text-muted-foreground">{label}</span>}
+          </div>
+        );
+      })}
+      {newImages.map((img, i) => {
+        const label = slotLabels?.[existing.length + i];
+        return (
+          <div key={img.id} className="flex flex-col items-center gap-1">
+            <div className={cn("relative overflow-hidden bg-muted", thumbSize)}>
+              <Image src={img.preview} alt="" fill className="object-cover" />
+              <button
+                type="button"
+                onClick={() => onRemoveNew(img.id)}
+                className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white"
+                aria-label="Remover imagem"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+            {label && <span className="text-[10px] text-muted-foreground">{label}</span>}
+          </div>
+        );
+      })}
       <label
         className={cn(
           "flex cursor-pointer flex-col items-center justify-center gap-1 border border-dashed border-border text-muted-foreground hover:border-foreground",

@@ -5,10 +5,10 @@ import type { CartItem } from "@/types";
 interface CartState {
   items: CartItem[];
   addItem: (item: CartItem) => void;
-  removeItem: (productId: string, colorId: string, sizeId: string) => void;
+  removeItem: (productId: string, colorId: string | null, sizeId: string) => void;
   updateQuantity: (
     productId: string,
-    colorId: string,
+    colorId: string | null,
     sizeId: string,
     quantity: number
   ) => void;
@@ -18,7 +18,7 @@ interface CartState {
 function sameLine(
   item: CartItem,
   productId: string,
-  colorId: string,
+  colorId: string | null,
   sizeId: string
 ) {
   return (

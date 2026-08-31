@@ -30,7 +30,6 @@ function buildVariants(
         colorId,
         sizeId,
         available,
-        stock: available ? 8 : 0,
       });
     }
   }

@@ -17,12 +17,11 @@ interface SizeInput {
   label: string;
 }
 interface VariantInput {
-  colorTempId: string;
+  colorTempId: string | null;
   sizeTempId: string;
   available: boolean;
-  stock: number;
 }
-interface ExistingImage {
+interface ImageInput {
   url: string;
   alt: string;
   colorTempId: string | null;
@@ -42,33 +41,15 @@ function parseJson<T>(formData: FormData, key: string, fallback: T): T {
   }
 }
 
-async function uploadProductImage(
-  supabase: SupabaseServer,
-  productId: string,
-  file: File
-) {
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const path = `products/${productId}/${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage
-    .from("product-images")
-    .upload(path, file, { contentType: file.type });
-  if (error) throw error;
-  return supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
-}
-
 async function replaceChildren(
   supabase: SupabaseServer,
   productId: string,
-  formData: FormData,
-  keepImages: ExistingImage[]
+  formData: FormData
 ) {
   const colors = parseJson<ColorInput[]>(formData, "colorsJson", []);
   const sizes = parseJson<SizeInput[]>(formData, "sizesJson", []);
   const variants = parseJson<VariantInput[]>(formData, "variantsJson", []);
-  const newImageFiles = formData.getAll("newImages").filter(
-    (f): f is File => f instanceof File && f.size > 0
-  );
-  const newImageColorTempIds = formData.getAll("newImagesColorTempId").map(String);
+  const images = parseJson<ImageInput[]>(formData, "imagesJson", []);
 
   await supabase.from("product_images").delete().eq("product_id", productId);
   await supabase.from("product_variants").delete().eq("product_id", productId);
@@ -92,20 +73,9 @@ async function replaceChildren(
     colors.forEach((c, i) => colorIdByTempId.set(c.tempId, colorRows[i].id as string));
   }
 
-  const uploadedUrls = await Promise.all(
-    newImageFiles.map((file) => uploadProductImage(supabase, productId, file))
-  );
-  const allImages = [
-    ...keepImages,
-    ...uploadedUrls.map((url, i) => ({
-      url,
-      alt: "",
-      colorTempId: newImageColorTempIds[i] || null,
-    })),
-  ];
-  if (allImages.length > 0) {
+  if (images.length > 0) {
     const { error } = await supabase.from("product_images").insert(
-      allImages.map((img, i) => ({
+      images.map((img, i) => ({
         product_id: productId,
         url: img.url,
         alt: img.alt || null,
@@ -135,14 +105,11 @@ async function replaceChildren(
   const variantRows = variants
     .map((v) => ({
       product_id: productId,
-      color_id: colorIdByTempId.get(v.colorTempId),
+      color_id: v.colorTempId ? colorIdByTempId.get(v.colorTempId) ?? null : null,
       size_id: sizeIdByTempId.get(v.sizeTempId),
       available: v.available,
-      stock: v.stock,
     }))
-    .filter((v): v is typeof v & { color_id: string; size_id: string } =>
-      Boolean(v.color_id && v.size_id)
-    );
+    .filter((v): v is typeof v & { size_id: string } => Boolean(v.size_id));
 
   if (variantRows.length > 0) {
     const { error: variantErr } = await supabase
@@ -208,7 +175,7 @@ export async function createProduct(
   }
 
   try {
-    await replaceChildren(supabase, product.id, formData, []);
+    await replaceChildren(supabase, product.id, formData);
   } catch {
     return { error: "Produto criado, mas houve erro ao salvar imagens/variações." };
   }
@@ -230,8 +197,6 @@ export async function updateProduct(
   if (!fields.name || !fields.reference || !fields.price) {
     return { error: "Preencha nome, referência e preço." };
   }
-
-  const keepImages = parseJson<ExistingImage[]>(formData, "existingImagesJson", []);
 
   const { error } = await supabase
     .from("products")
@@ -260,7 +225,7 @@ export async function updateProduct(
   }
 
   try {
-    await replaceChildren(supabase, id, formData, keepImages);
+    await replaceChildren(supabase, id, formData);
   } catch {
     return { error: "Produto atualizado, mas houve erro ao salvar imagens/variações." };
   }

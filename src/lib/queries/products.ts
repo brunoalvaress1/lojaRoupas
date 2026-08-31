@@ -25,10 +25,9 @@ interface ProductRow {
   product_colors: { id: string; name: string; hex: string; position: number }[];
   product_sizes: { id: string; label: string; position: number }[];
   product_variants: {
-    color_id: string;
+    color_id: string | null;
     size_id: string;
     available: boolean;
-    stock: number;
   }[];
 }
 
@@ -46,7 +45,6 @@ function mapProduct(row: ProductRow): Product {
     colorId: v.color_id,
     sizeId: v.size_id,
     available: v.available,
-    stock: v.stock,
   }));
 
   return {

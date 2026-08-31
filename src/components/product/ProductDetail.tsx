@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Minus, Plus, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import type { Product, SizeGuideRow } from "@/types";
 import { Price } from "@/components/shared/Price";
 import { FavoriteButton } from "./FavoriteButton";
@@ -18,9 +18,8 @@ export function ProductDetail({
   product: Product;
   sizeGuideRows: SizeGuideRow[];
 }) {
-  const [colorId, setColorId] = useState(product.colors[0]?.id ?? "");
+  const [colorId, setColorId] = useState<string | null>(product.colors[0]?.id ?? null);
   const [sizeId, setSizeId] = useState<string | null>(null);
-  const [quantity, setQuantity] = useState(1);
   const [confirmed, setConfirmed] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
 
@@ -60,7 +59,7 @@ export function ProductDetail({
       sizeId,
       sizeLabel: size?.label ?? "",
       price: activePrice,
-      quantity,
+      quantity: 1,
     });
 
     setConfirmed(true);
@@ -84,33 +83,35 @@ export function ProductDetail({
         />
 
         {/* colors */}
-        <div className="mt-8">
-          <p className="mb-3 text-xs font-medium uppercase tracking-widest-xs text-muted-foreground">
-            Cor: {product.colors.find((c) => c.id === colorId)?.name}
-          </p>
-          <div className="flex flex-wrap gap-3">
-            {product.colors.map((color) => (
-              <button
-                key={color.id}
-                onClick={() => {
-                  setColorId(color.id);
-                  setSizeId(null);
-                }}
-                aria-label={color.name}
-                className={cn(
-                  "h-9 w-9 rounded-full border-2 transition-transform",
-                  colorId === color.id
-                    ? "scale-110 border-foreground"
-                    : "border-transparent"
-                )}
-                style={{
-                  backgroundColor: color.hex,
-                  boxShadow: "0 0 0 1px var(--border) inset",
-                }}
-              />
-            ))}
+        {product.colors.length > 0 && (
+          <div className="mt-8">
+            <p className="mb-3 text-xs font-medium uppercase tracking-widest-xs text-muted-foreground">
+              Cor: {product.colors.find((c) => c.id === colorId)?.name}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {product.colors.map((color) => (
+                <button
+                  key={color.id}
+                  onClick={() => {
+                    setColorId(color.id);
+                    setSizeId(null);
+                  }}
+                  aria-label={color.name}
+                  className={cn(
+                    "h-9 w-9 rounded-full border-2 transition-transform",
+                    colorId === color.id
+                      ? "scale-110 border-foreground"
+                      : "border-transparent"
+                  )}
+                  style={{
+                    backgroundColor: color.hex,
+                    boxShadow: "0 0 0 1px var(--border) inset",
+                  }}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* sizes */}
         <div className="mt-8">
@@ -150,30 +151,6 @@ export function ProductDetail({
               Selecione um tamanho disponível.
             </p>
           )}
-        </div>
-
-        {/* quantity */}
-        <div className="mt-8">
-          <p className="mb-3 text-xs font-medium uppercase tracking-widest-xs text-muted-foreground">
-            Quantidade
-          </p>
-          <div className="inline-flex items-center border border-border">
-            <button
-              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="flex h-10 w-10 items-center justify-center"
-              aria-label="Diminuir quantidade"
-            >
-              <Minus className="h-3.5 w-3.5" strokeWidth={1.5} />
-            </button>
-            <span className="w-8 text-center text-sm">{quantity}</span>
-            <button
-              onClick={() => setQuantity((q) => q + 1)}
-              className="flex h-10 w-10 items-center justify-center"
-              aria-label="Aumentar quantidade"
-            >
-              <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
-            </button>
-          </div>
         </div>
 
         {/* actions */}

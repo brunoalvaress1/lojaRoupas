@@ -2,7 +2,7 @@ import type { Product, ProductColor } from "@/types";
 
 export function isVariantAvailable(
   product: Product,
-  colorId: string,
+  colorId: string | null,
   sizeId: string
 ) {
   const variant = product.variants.find(

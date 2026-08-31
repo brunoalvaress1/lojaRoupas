@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createCategory, updateCategory, type CategoryFormState } from "@/lib/actions/categories";
+import { uploadToStorage } from "@/lib/upload-client";
 import type { Category } from "@/types";
 
 const initialState: CategoryFormState = {};
@@ -12,10 +13,36 @@ export function CategoryForm({ category }: { category?: Category }) {
   const router = useRouter();
   const action = category ? updateCategory.bind(null, category.id) : createCategory;
   const [state, formAction, pending] = useActionState(action, initialState);
+  const [, startTransition] = useTransition();
   const [preview, setPreview] = useState<string | null>(category?.image ?? null);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    fd.delete("image");
+
+    if (file) {
+      setUploadError(null);
+      setUploading(true);
+      try {
+        const url = await uploadToStorage("product-images", "categories", file);
+        fd.set("imageUrl", url);
+      } catch {
+        setUploading(false);
+        setUploadError("Não foi possível enviar a imagem. Verifique sua conexão e tente novamente.");
+        return;
+      }
+      setUploading(false);
+    }
+
+    startTransition(() => formAction(fd));
+  }
 
   return (
-    <form action={formAction} className="max-w-xl border border-border bg-background p-6">
+    <form onSubmit={handleSubmit} className="max-w-xl border border-border bg-background p-6">
       <div className="flex flex-col gap-5">
         <label className="flex flex-col gap-1.5">
           <span className="text-xs uppercase tracking-widest-xs text-muted-foreground">
@@ -63,8 +90,9 @@ export function CategoryForm({ category }: { category?: Category }) {
             accept="image/*"
             required={!category}
             onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) setPreview(URL.createObjectURL(file));
+              const selected = e.target.files?.[0] ?? null;
+              setFile(selected);
+              if (selected) setPreview(URL.createObjectURL(selected));
             }}
             className="text-sm"
           />
@@ -90,15 +118,22 @@ export function CategoryForm({ category }: { category?: Category }) {
           Categoria ativa (visível na loja)
         </label>
 
+        {uploadError && <p className="text-xs text-red-600">{uploadError}</p>}
         {state.error && <p className="text-xs text-red-600">{state.error}</p>}
 
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            disabled={pending}
+            disabled={pending || uploading}
             className="bg-accent px-6 py-3 text-xs font-medium uppercase tracking-widest-xs text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            {pending ? "Salvando..." : category ? "Salvar alterações" : "Criar categoria"}
+            {uploading
+              ? "Enviando imagem..."
+              : pending
+                ? "Salvando..."
+                : category
+                  ? "Salvar alterações"
+                  : "Criar categoria"}
           </button>
           <button
             type="button"

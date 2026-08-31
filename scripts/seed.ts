@@ -194,10 +194,9 @@ async function seedProducts() {
     const { error: variantErr } = await supabase.from("product_variants").insert(
       product.variants.map((v) => ({
         product_id: productId,
-        color_id: colorIdByLocalId.get(v.colorId)!,
+        color_id: v.colorId ? colorIdByLocalId.get(v.colorId) ?? null : null,
         size_id: sizeIdByLocalId.get(v.sizeId)!,
         available: v.available,
-        stock: v.stock,
       }))
     );
     if (variantErr) throw variantErr;

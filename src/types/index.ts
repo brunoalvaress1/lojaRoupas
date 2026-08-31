@@ -10,10 +10,10 @@ export interface ProductSize {
 }
 
 export interface ProductVariant {
-  colorId: string;
+  /** null when the product has no color options at all. */
+  colorId: string | null;
   sizeId: string;
   available: boolean;
-  stock: number;
 }
 
 export interface ProductImage {
@@ -58,7 +58,7 @@ export interface CartItem {
   name: string;
   reference: string;
   image: string;
-  colorId: string;
+  colorId: string | null;
   colorName: string;
   sizeId: string;
   sizeLabel: string;
