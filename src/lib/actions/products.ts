@@ -162,7 +162,7 @@ export async function createProduct(
       is_featured: fields.isFeatured,
       active: fields.active,
     })
-    .select("id")
+    .select("id, slug")
     .single();
 
   if (error || !product) {
@@ -183,6 +183,7 @@ export async function createProduct(
   revalidatePath("/admin/produtos");
   revalidatePath("/colecao");
   revalidatePath("/");
+  revalidatePath(`/produto/${product.slug}`);
   redirect("/admin/produtos");
 }
 
@@ -198,7 +199,7 @@ export async function updateProduct(
     return { error: "Preencha nome, referência e preço." };
   }
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("products")
     .update({
       name: fields.name,
@@ -213,7 +214,9 @@ export async function updateProduct(
       active: fields.active,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select("slug")
+    .single();
 
   if (error) {
     return {
@@ -233,28 +236,38 @@ export async function updateProduct(
   revalidatePath("/admin/produtos");
   revalidatePath("/colecao");
   revalidatePath("/");
+  revalidatePath(`/produto/${updated.slug}`);
   redirect("/admin/produtos");
 }
 
 export async function deleteProduct(id: string) {
   const supabase = await createClient();
-  const { error } = await supabase.from("products").delete().eq("id", id);
+  const { data: deleted, error } = await supabase
+    .from("products")
+    .delete()
+    .eq("id", id)
+    .select("slug")
+    .single();
   if (error) throw error;
 
   revalidatePath("/admin/produtos");
   revalidatePath("/colecao");
   revalidatePath("/");
+  if (deleted) revalidatePath(`/produto/${deleted.slug}`);
 }
 
 export async function toggleProductActive(id: string, active: boolean) {
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("products")
     .update({ active })
-    .eq("id", id);
+    .eq("id", id)
+    .select("slug")
+    .single();
   if (error) throw error;
 
   revalidatePath("/admin/produtos");
   revalidatePath("/colecao");
   revalidatePath("/");
+  if (updated) revalidatePath(`/produto/${updated.slug}`);
 }
